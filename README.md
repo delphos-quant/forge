@@ -15,17 +15,23 @@ If you prefer not to go through the installation process or simply want to run t
 
 ### For Linux/macOS Users
 
-A shell script named `strategy_manager.sh` is provided. This script encapsulates the actual compiled binary for ease of use.
+1. First, you'll need to extract the compressed file. If you've downloaded the \`**strategy_manager_linux.tar.gz**\` from the releases, you can decompress it using the following command:
+
+```bash
+tar -xzvf strategy_manager_linux.tar.gz
+```
+
+This will extract the contents, including strategy_manager.sh (the shell script) and the actual compiled binary strategy_manager.
 
 To run the strategy manager using the shell script:
 
-1. Ensure the script has execute permissions:
+2. Ensure the script has execute permissions:
 
     ```bash
     chmod +x strategy_manager.sh
     ```
 
-2. Run the script:
+3. Run the script:
 
     ```bash
     ./strategy_manager.sh [arguments]
