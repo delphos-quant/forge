@@ -1,0 +1,7 @@
+/strategy_manager.sh
+/strategy_manager.spec
+/build/
+/dist/
+
+/venv/
+/managers_example/cache/
