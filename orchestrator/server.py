@@ -1,13 +1,32 @@
 import argparse
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import yaml
 
 
 class ServerOrchestrator:
-    def __init__(self, config_file):
+    def __init__(self, config_file, origins: list[str] = None):
         self.app = FastAPI()
+
+        if origins is None:
+            origins = [
+                "http://localhost:80",
+                "http://localhost:443",
+                "http://localhost:3000",
+                "http://localhost:8000",
+                "http://localhost:8080",
+            ]
+
+        self.app.add_middleware(
+            CORSMiddleware,
+            allow_origins=origins,
+            allow_credentials=True,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
         self.managers = self.load_manager_info(config_file)
         self.refresh_managers()
         self.setup_routes()
@@ -46,18 +65,18 @@ class ServerOrchestrator:
     def setup_routes(self):
         @self.app.get("/managers/")
         async def list_managers():
-            return {"managers_example": self.managers}
+            return {"available": self.managers}
 
         @self.app.post("/managers/")
         async def refresh_managers():
             self.refresh_managers()
-            return "ok"
+            return {"message": "Managers refreshed successfully"}
 
         @self.app.get("/managers/{manager_name}/")
         async def proxy_get_routes(manager_name: str):
             status = self.verify_manager(manager_name)
             if "error" in status:
-                return status
+                raise HTTPException(status_code=404, detail=f"Manager '{manager_name}' not available")
 
             async with self.get_client() as client:
                 response = await client.get(f"{self.managers[manager_name]['route']}/")
@@ -69,7 +88,7 @@ class ServerOrchestrator:
                                    endpoint: str):
             status = self.verify_manager(manager_name)
             if "error" in status:
-                return status
+                raise HTTPException(status_code=404, detail=f"Manager '{manager_name}' not available")
 
             async with self.get_client() as client:
                 response = await client.get(f"{self.managers[manager_name]['route']}/{endpoint}")
@@ -80,7 +99,7 @@ class ServerOrchestrator:
         async def proxy_post_method(manager_name: str, endpoint: str, request: Request):
             status = self.verify_manager(manager_name)
             if "error" in status:
-                return status
+                raise HTTPException(status_code=404, detail=f"Manager '{manager_name}' not available")
 
             data = await request.json()
             async with self.get_client() as client:
@@ -98,9 +117,10 @@ def main():
     parser.add_argument("config_file", help="Path to the manager config file")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
     parser.add_argument("--port", default=8000, type=int, help="Port to listen on (default: 8000)")
+    parser.add_argument("--cors", default=None, type=list, help="Specify cors origins")
     args = parser.parse_args()
 
-    orchestrator = ServerOrchestrator(args.config_file)
+    orchestrator = ServerOrchestrator(args.config_file, args.cors)
     orchestrator.run(args.host, args.port)
 
 
