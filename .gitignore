@@ -5,3 +5,9 @@
 
 /venv/
 /examples/cache/
+
+.idea
+.vscode
+*.pyc
+*.csv
+```
