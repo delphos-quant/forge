@@ -127,12 +127,12 @@ A sample strategy script (`my_strategy.py`) is provided to demonstrate how to us
 
 To run the sample strategy manager instance:
 ```bash
-python managers_example/my_strategy.py
+python examples/my_simulation.py
 ```
 
 And in another terminal, run the strategy manager:
 ```bash
-./strategy_manager.sh managers_example/my_managers.yaml
+./strategy_manager.sh examples/my_managers.yaml
 # or
 # python server.py my_managers.yaml
 ```

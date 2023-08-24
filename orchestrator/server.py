@@ -113,7 +113,7 @@ class ServerOrchestrator:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Start the managers_example manager server.")
+    parser = argparse.ArgumentParser(description="Start the examples manager server.")
     parser.add_argument("config_file", help="Path to the manager config file")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
     parser.add_argument("--port", default=8000, type=int, help="Port to listen on (default: 8000)")
