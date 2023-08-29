@@ -1,0 +1,4 @@
+{
+  "SuperStrategy": { "route": "http://localhost:5001" },
+  "IncredibleStrategy": { "route": "http://localhost:5002", "disabled": true },
+}

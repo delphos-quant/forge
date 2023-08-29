@@ -4,7 +4,7 @@
 /dist/
 
 /venv/
-/examples/cache/
+/strategies/cache/
 
 .idea
 .vscode

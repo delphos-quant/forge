@@ -1,4 +1,0 @@
-{
-  "simulation_manager_1": { "route": "http://localhost:5000" },
-  "execution_manager2": { "route": "http://localhost:6002", "disabled": true },
-}

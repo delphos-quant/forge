@@ -99,7 +99,7 @@ Replace `[arguments]` with any command-line arguments you wish to pass to the st
 To start the orchestration server:
 
 ```bash
-python server.py my_managers.yaml
+python server.py available_strategies.yaml
 ```
 
 Optional command-line arguments:
@@ -127,14 +127,14 @@ A sample strategy script (`my_strategy.py`) is provided to demonstrate how to us
 
 To run the sample strategy manager instance:
 ```bash
-python examples/my_simulation.py
+python strategies/strategy1.py
 ```
 
 And in another terminal, run the strategy manager:
 ```bash
-./strategy_manager.sh examples/my_managers.yaml
+./strategy_manager.sh strategies/available_strategies.yaml
 # or
-# python server.py my_managers.yaml
+# python server.py available_strategies.yaml
 ```
 
 ## Configuration
