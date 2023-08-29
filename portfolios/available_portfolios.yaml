@@ -1,0 +1,3 @@
+{
+  "client1": { "name": "Portfolio de Zimmer", "route": "http://localhost:5000" }
+}
