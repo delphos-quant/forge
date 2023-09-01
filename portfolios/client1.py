@@ -1,6 +1,7 @@
 import websocket
 
 import dxlib as dx
+from websocket import WebSocketException
 
 
 def on_message(ws, message):
@@ -22,12 +23,15 @@ def on_open(ws):
 def main():
     portfolio = dx.Portfolio().add_cash(1e4)
     ws_url = "wss://localhost:6001/portfolio"  # replace with your WebSocket URL
-    ws = websocket.WebSocketApp(ws_url,
-                                on_message=on_message,
-                                on_error=on_error,
-                                on_close=on_close)
+    try:
+        ws = websocket.WebSocketApp(ws_url,
+                                    on_message=on_message,
+                                    on_error=on_error,
+                                    on_close=on_close)
 
-    ws.send(portfolio.current_weights)
+        ws.send(portfolio.current_weights)
+    except WebSocketException as e:
+        print(e)
 
 
 if __name__ == "__main__":

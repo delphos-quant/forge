@@ -1,3 +1,5 @@
+import time
+
 import dxlib as dx
 from dxlib import StrategyManager
 from dxlib.strategies import RsiStrategy
@@ -13,7 +15,10 @@ def main():
     manager.start()
 
     try:
-        while manager.server.is_alive():
+        while not manager.websocket.is_alive():
+            time.sleep(1)
+
+        while manager.is_alive():
             with manager.server.exceptions as exceptions:
                 if exceptions:
                     logger.exception(exceptions)
@@ -21,6 +26,7 @@ def main():
         pass
     finally:
         manager.stop()
+        logger.info("Strategy manager has been shutdown.")
 
 
 if __name__ == "__main__":
