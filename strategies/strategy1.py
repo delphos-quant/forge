@@ -13,6 +13,8 @@ def main():
                               logger=logger)
 
     manager.start()
+    portfolio = dx.Portfolio().add_cash(1e4)
+    manager.register(portfolio)
 
     try:
         while not manager.websocket.is_alive():
