@@ -1,0 +1,16 @@
+# Use the base image as the starting point
+FROM strategy:latest
+
+# Copy strategy-specific code and files
+COPY . .
+
+# Set environment variables or add any other strategy-specific configurations
+ENV STRATEGY_NAME="RSI Strategy"
+ENV SERVER_PORT 5001
+ENV WEBSOCKET_PORT 6001
+
+EXPOSE $PORT
+EXPOSE $WEBSOCKET_PORT
+
+# Define the command to run when the container starts
+CMD ["python", "run.py"]

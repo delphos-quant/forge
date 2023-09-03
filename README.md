@@ -127,7 +127,7 @@ A sample strategy script (`my_strategy.py`) is provided to demonstrate how to us
 
 To run the sample strategy manager instance:
 ```bash
-python strategies/strategy1.py
+python strategies/run.py
 ```
 
 And in another terminal, run the strategy manager:
