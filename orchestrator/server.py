@@ -4,11 +4,13 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import httpx
 import yaml
+import docker
 
 
 class ServerOrchestrator:
-    def __init__(self, config_file, origins: list[str] = None):
+    def __init__(self, config_path, origins: list[str] = None):
         self.app = FastAPI()
+        self.docker = docker.from_env()
 
         if origins is None:
             origins = [
@@ -27,100 +29,141 @@ class ServerOrchestrator:
             allow_headers=["*"],
         )
 
-        self.managers = self.load_manager_info(config_file)
-        self.refresh_managers()
+        self.strategies = {}
+        self.port = None
+        self.host = None
+
+        self.config(config_path)
         self.setup_routes()
+
+    def config(self, config_path):
+        with open(config_path, 'r') as file:
+            config = yaml.safe_load(file)
+
+        self.port = config.get("port", 8000)
+        self.host = config.get("host", "")
+
+        strategies_compose = config.get("strategies", None)
+        # read the docker-compose.yaml to get the ports of the strategies
+        if strategies_compose:
+            with open(strategies_compose, 'r') as file:
+                strategies_config = yaml.safe_load(file)
+            for strategy, data in strategies_config["services"].items():
+                self.strategies[strategy] = {
+                    "image": data["image"],
+                    "status": "unavailable"
+                }
+                env = {key: value for key, value in (env_var.split('=') for env_var in
+                                                     self.docker.images.get(data["image"]).attrs['Config']['Env'])}
+
+                if data.get("container_name", False):
+                    self.strategies[strategy]["container_name"] = data["container_name"]
+
+                if env.get("WEBSOCKET_PORT", False):
+                    self.strategies[strategy]["websocket"] = f"http://localhost:{env['WEBSOCKET_PORT']}"
+
+                if env.get("SERVER_PORT", False):
+                    self.strategies[strategy]["server"] = f"http://localhost:{env['SERVER_PORT']}"
+                    self.strategies[strategy]["status"] = "available" if self.test_strategy(strategy) else "unavailable"
 
     @classmethod
     def get_client(cls):
         return httpx.AsyncClient()
 
-    @classmethod
-    def load_manager_info(cls, config_file):
-        with open(config_file, 'r') as file:
-            manager_info = yaml.safe_load(file)
-        return manager_info
+    def start_strategy(self, strategy):
+        self.docker.containers.run(
+            self.strategies[strategy]["image"],
+            ports={self.strategies[strategy]["port"]: self.strategies[strategy]["port"]},
+            detach=True
+        )
 
-    def test_manager(self, manager_name):
-        if self.managers[manager_name].get("disabled", False):
-            return False
+    def test_strategy(self, strategy):
         try:
-            url = f"{self.managers[manager_name]['route']}"
+            url = f"{self.strategies[strategy]['server']}"
             response = httpx.get(url)
             return response.status_code == 200
         except (httpx.HTTPError, httpx.InvalidURL):
             return False
 
-    def refresh_managers(self):
-        for manager_name in self.managers:
-            self.managers[manager_name]["status"] = "available" if self.test_manager(manager_name) else "unavailable"
-
-    def verify_manager(self, manager_name):
-        if manager_name not in self.managers:
-            return {"error": "Invalid manager specified"}
-        if self.managers[manager_name]["status"] != "available":
-            return {"error": "Manager is unavailable"}
+    def verify_strategy(self, strategy):
+        if strategy not in self.strategies:
+            return {"error": "Invalid strategy specified"}
+        if self.strategies[strategy].get("status", None) != "available":
+            return {"error": "strategy is unavailable"}
         return {"status": "ok"}
 
+    def refresh_strategies(self):
+        for strategy in self.strategies:
+            self.strategies[strategy]["status"] = "available" if self.test_strategy(strategy) else "unavailable"
+
     def setup_routes(self):
-        @self.app.get("/managers/")
-        async def list_managers():
-            return {"available": self.managers}
+        @self.app.get("/strategy/")
+        async def list_strategys():
+            available = []
+            unavailable = []
+            for strategy in self.strategies:
+                if self.strategies[strategy]["status"] == "available":
+                    available.append(strategy)
+                else:
+                    unavailable.append(strategy)
 
-        @self.app.post("/managers/")
-        async def refresh_managers():
-            self.refresh_managers()
-            return {"message": "Managers refreshed successfully"}
+            return {"available": available, "unavailable": unavailable}
 
-        @self.app.get("/managers/{manager_name}/")
-        async def proxy_get_routes(manager_name: str):
-            status = self.verify_manager(manager_name)
-            if "error" in status:
-                raise HTTPException(status_code=404, detail=f"Manager '{manager_name}' not available")
+        @self.app.post("/strategy/")
+        async def refresh_strategies():
+            self.refresh_strategies()
+            return {"message": "strategies refreshed successfully"}
+
+        @self.app.get("/strategy/{strategy}/")
+        async def proxy_get_routes(strategy: str):
+            if strategy not in self.strategies or self.strategies[strategy].get("status", None) != "available":
+                raise HTTPException(status_code=404, detail=f"strategy '{strategy}' not available")
 
             async with self.get_client() as client:
-                response = await client.get(f"{self.managers[manager_name]['route']}/")
+                response = await client.get(f"{self.strategies[strategy]['server']}/")
 
                 return response.json()["endpoints"]
 
-        @self.app.get("/managers/{manager_name}/{endpoint}")
-        async def proxy_get_method(manager_name: str,
+        @self.app.get("/strategy/{strategy_name}/{endpoint}")
+        async def proxy_get_method(strategy_name: str,
                                    endpoint: str):
-            status = self.verify_manager(manager_name)
+            status = self.verify_strategy(strategy_name)
             if "error" in status:
-                raise HTTPException(status_code=404, detail=f"Manager '{manager_name}' not available")
+                raise HTTPException(status_code=404, detail=f"strategy '{strategy_name}' not available")
 
             async with self.get_client() as client:
-                response = await client.get(f"{self.managers[manager_name]['route']}/{endpoint}")
+                response = await client.get(f"{self.strategies[strategy_name]['server']}/{endpoint}")
 
                 return response.json()
 
-        @self.app.post("/managers/{manager_name}/{endpoint}")
-        async def proxy_post_method(manager_name: str, endpoint: str, request: Request):
-            status = self.verify_manager(manager_name)
+        @self.app.post("/strategy/{strategy_name}/{endpoint}")
+        async def proxy_post_method(strategy_name: str, endpoint: str, request: Request):
+            status = self.verify_strategy(strategy_name)
             if "error" in status:
-                raise HTTPException(status_code=404, detail=f"Manager '{manager_name}' not available")
+                raise HTTPException(status_code=404, detail=f"strategy '{strategy_name}' not available")
 
             data = await request.json()
             async with self.get_client() as client:
-                response = await client.post(f"{self.managers[manager_name]['route']}/{endpoint}", json=data)
+                response = await client.post(f"{self.strategies[strategy_name]['server']}/{endpoint}", json=data)
 
                 return response.json()
 
-    def run(self, host="0.0.0.0", port=8000):
+    def run(self, host=None, port=None):
         import uvicorn
-        uvicorn.run(self.app, host=host, port=port)
+        uvicorn.run(self.app,
+                    host=host if host else self.host,
+                    port=port if port else self.port)
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Start the strategies manager server.")
-    parser.add_argument("config_file", help="Path to the manager config file")
+    parser = argparse.ArgumentParser(description="Start the strategies strategy server.")
+    parser.add_argument("config", help="Path to the strategy config file")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to (default: 0.0.0.0)")
     parser.add_argument("--port", default=8000, type=int, help="Port to listen on (default: 8000)")
     parser.add_argument("--cors", default=None, type=list, help="Specify cors origins")
     args = parser.parse_args()
 
-    orchestrator = ServerOrchestrator(args.config_file, args.cors)
+    orchestrator = ServerOrchestrator(args.config, args.cors)
     orchestrator.run(args.host, args.port)
 
 
