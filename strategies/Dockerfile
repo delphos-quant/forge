@@ -5,4 +5,4 @@ FROM python:3.10
 WORKDIR /strategy
 
 # Install any additional dependencies if needed
-RUN pip install dxlib
+RUN pip install dxlib==1.0.10
