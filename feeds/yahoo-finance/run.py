@@ -1,13 +1,11 @@
 import time
 import threading
-from typing import AsyncGenerator
 
 import websocket
 import json
-import asyncio
 from datetime import datetime
 
-from dxlib import info_logger, History, Security
+from dxlib import info_logger, History
 from dxlib.api import YFinanceAPI
 
 
@@ -121,9 +119,9 @@ def main():
 
     data = YFinanceAPI().get_historical_bars(["AAPL", "MSFT", "GOOGL", "AMZN"], start=start, end=end)
 
-    feed = FeedManager(data.iterrows())
+    feed = FeedManager(data.iterrows(), "rsi-strategy", "6001")
     feed.start()
-    delay = 1
+    delay = 60 * 60 * 24  # 1 day
 
     try:
         while feed.is_alive():

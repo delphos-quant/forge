@@ -1,0 +1,20 @@
+version: '3'
+services:
+  feed:
+    image: feed:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+  yahoo-finance-feed:
+    image: yahoo-finance-feed:latest
+    depends_on:
+      - feed
+    build:
+      context: ./yahoo-finance
+      dockerfile: Dockerfile
+    networks:
+      - delphos
+
+networks:
+  delphos:
+    external: true

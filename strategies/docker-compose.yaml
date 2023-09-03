@@ -1,0 +1,24 @@
+version: '3'
+services:
+  strategy:
+    image: strategy:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+  rsi-strategy:
+    container_name: rsi-strategy
+    image: rsi-strategy:latest
+    depends_on:
+      - strategy
+    build:
+      context: ./rsi-strategy
+      dockerfile: Dockerfile
+    ports:
+      - "5001:5001"
+      - "6001:6001"
+    networks:
+      - delphos
+
+networks:
+  delphos:
+    external: true

@@ -1,8 +1,0 @@
-version: '3'
-services:
-  web_app:
-    image: strategy1:latest
-    ports:
-      - "5001:5001"
-  backend_service:
-    image: ubuntu:latest
