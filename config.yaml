@@ -1,5 +1,5 @@
 {
-  "feeds": "feeds/",
+  "feeds": "feeds/docker-compose.yaml",
   "strategies": "strategies/docker-compose.yaml",
 #  "portfolios": "portfolios/",
   "port": "8000",
