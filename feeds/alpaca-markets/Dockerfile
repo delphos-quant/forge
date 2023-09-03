@@ -1,0 +1,15 @@
+# Use the base image as the starting point
+FROM feed:latest
+
+# Copy strategy-specific code and files
+COPY . .
+
+# Set environment variables or add any other strategy-specific configurations
+ENV STRATEGY_NAME="Alpaca Markets Feed"
+ENV PORT="6001"
+ENV HOST="rsi-strategy"
+
+RUN pip install alpaca-py
+
+# Define the command to run when the container starts
+CMD ["python", "run.py"]

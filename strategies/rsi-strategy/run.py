@@ -7,8 +7,8 @@ from dxlib.strategies import RsiStrategy
 
 def main():
     logger = dx.info_logger()
-    server_port = int(os.environ["SERVER_PORT"]) if "SERVER_PORT" in os.environ else 5000
-    websocket_port = int(os.environ["WEBSOCKET_PORT"]) if "WEBSOCKET_PORT" in os.environ else 6000
+    server_port = int(os.environ["SERVER_PORT"])
+    websocket_port = int(os.environ["WEBSOCKET_PORT"])
 
     manager = StrategyManager(RsiStrategy(), server_port=server_port, websocket_port=websocket_port, logger=logger)
 
