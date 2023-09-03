@@ -1,4 +1,4 @@
-import time
+import os
 
 import dxlib as dx
 from dxlib import StrategyManager
@@ -8,18 +8,16 @@ from dxlib.strategies import RsiStrategy
 def main():
     logger = dx.info_logger()
     manager = StrategyManager(RsiStrategy(),
-                              use_server=True, server_port=5001,
-                              use_websocket=True, websocket_port=6001,
+                              use_server=True,
+                              server_port=int(os.environ["SERVER_PORT"]) if "SERVER_PORT" in os.environ
+                              else None,
+                              use_websocket=True,
+                              websocket_port=int(os.environ["WEBSOCKET_PORT"]) if "WEBSOCKET_PORT" in os.environ
+                              else None,
                               logger=logger)
 
     manager.start()
-    portfolio = dx.Portfolio().add_cash(1e4)
-    manager.register(portfolio)
-
     try:
-        while not manager.websocket.is_alive():
-            time.sleep(1)
-
         while manager.is_alive():
             with manager.server.exceptions as exceptions:
                 if exceptions:
