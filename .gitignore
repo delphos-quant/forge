@@ -1,5 +1,3 @@
-/strategy_manager.sh
-/app.spec
 /build/
 /dist/
 
@@ -10,4 +8,5 @@
 .vscode
 *.pyc
 *.csv
+*.spec
 ```

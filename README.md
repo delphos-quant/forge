@@ -25,32 +25,37 @@ This will extract the contents, including strategy_manager.sh (the shell script)
 
 To run the strategy manager using the shell script:
 
-2. Ensure the script has execute permissions:
+2. Access the directory containing the sample strategy and feed managers
 
     ```bash
-    chmod +x strategy_manager.sh
+    cd strategy-manager
     ```
 
 3. Run the script:
 
     ```bash
-    ./strategy_manager.sh [arguments]
+    ./dist/strategy-manager [config_file] [--host] [--port]
+    # e.g. ./dist/strategy-manager config.yaml
     ```
 
 Replace `[arguments]` with any command-line arguments you wish to pass to the strategy manager.
 
 ### For Windows Users
 
-A standalone executable named `strategy_manager.exe` is available for Windows users.
+A standalone executable named `strategy-manager.exe` is available for Windows users.
 
 To run the strategy manager using the executable:
 
-1. Navigate to the directory containing `strategy_manager.exe` using the Command Prompt or PowerShell.
+1. Navigate to the directory containing the project files using the Command Prompt or PowerShell.
+    ```powershell
+   cd strategy-manager
+   ```    
 
 2. Run the executable:
 
     ```powershell
-    .\strategy_manager.exe [arguments]
+    .\dist\strategy-manager.exe [config_file] [--host] [--port]
+    # e.g. .\dist\strategy-manager.exe config.yaml
     ```
 
 Replace `[arguments]` with any command-line arguments you wish to pass to the strategy manager.
@@ -99,7 +104,7 @@ Replace `[arguments]` with any command-line arguments you wish to pass to the st
 To start the orchestration server:
 
 ```bash
-python server.py available_strategies.yaml
+python app.py config.yaml
 ```
 
 Optional command-line arguments:
@@ -108,33 +113,34 @@ Optional command-line arguments:
 
 ## Functionalities
 
-- **Listing Managers**:  
-   Visit `http://localhost:8000/managers/` to get a list of all available managers.
+- **Listing Strategies**:  
+   Visit `http://localhost:8000/strategy/` to get a list of all available strategies.
 
-- **Refreshing Manager Status**:  
-   POST request to `http://localhost:8000/managers/` to refresh the status of all managers.
+- **Refreshing Strategy Status**:  
+   POST request to `http://localhost:8000/strategy/` to refresh the status of all strategies.
 
-- **Proxy Get Routes for a Manager**:  
-   GET request to `http://localhost:8000/managers/{manager_name}/` to get routes available for a manager.
+- **Proxy Get Routes for a Strategy**:  
+   GET request to `http://localhost:8000/strategy/{strategy}/` to get routes available for a strategy.
 
-- **Proxy Get and Post Methods for a Manager Endpoint**:  
-   - GET: `http://localhost:8000/managers/{manager_name}/{endpoint}`
-   - POST: `http://localhost:8000/managers/{manager_name}/{endpoint}` with appropriate data payload.
+- **Proxy Get and Post Methods for a Strategy Endpoint**:  
+   - GET: `http://localhost:8000/strategy/{strategy}/{endpoint}`
+   - POST: `http://localhost:8000/strategy/{strategy}/{endpoint}` with appropriate data payload.
 
 ## Sample strategy for testing
 
-A sample strategy script (`my_strategy.py`) is provided to demonstrate how to use the `dxlib` library. This script fetches historical stock data for a set of tickers, runs a simple RSI strategy on the data, and calculates returns.
+A sample strategy folder (`strategies/rsi-strategy`) is provided to demonstrate how to use the `dxlib` library. 
+This script uses historical stock data for a set of tickers, runs a simple RSI strategy on the data, and calculates a list of signals.
 
 To run the sample strategy manager instance:
 ```bash
-python strategies/run.py
+python strategies/rsi-strategy/run.py
 ```
 
 And in another terminal, run the strategy manager:
 ```bash
-./strategy_manager.sh strategies/available_strategies.yaml
+ python app.py config.yaml
 # or
-# python server.py available_strategies.yaml
+# ./dist/strategy_manager config.yaml
 ```
 
 ## Configuration
@@ -142,16 +148,17 @@ And in another terminal, run the strategy manager:
 Managers can be added or removed by modifying the a _yaml_ file.
 
 Example:
-_**my_managers.yaml**_
+_**config.yaml**_
 ```yaml
-simulation_manager_1:
-  route: "http://localhost:5000"
-execution_manager2:
-  route: "http://localhost:6002"
-  disabled: true
+{
+  "feeds": "feeds/docker-compose.yaml",
+  "strategies": "strategies/docker-compose.yaml",
+  "port": "5000",
+  "host": "0.0.0.0"
+}
 ```
 
-In this configuration, `simulation_manager_1` is enabled and available at `http://localhost:5000`, while `execution_manager2` is disabled.
+In this configuration, `strategies` has a list of docker compose services that serve on different ports. These available ports can be accessed at `http://localhost:5000`.
 
 ## Contributing
 
