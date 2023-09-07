@@ -6,10 +6,10 @@ COPY . .
 
 # Set environment variables or add any other strategy-specific configurations
 ENV STRATEGY_NAME="RSI Strategy"
-ENV SERVER_PORT 5001
-ENV WEBSOCKET_PORT 6001
+ENV HTTP_PORT=5001
+ENV WEBSOCKET_PORT=6001
 
-EXPOSE $PORT
+EXPOSE $HTTP_PORT
 EXPOSE $WEBSOCKET_PORT
 
 # Define the command to run when the container starts
