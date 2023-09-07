@@ -1,3 +1,4 @@
+import os
 import time
 
 from datetime import datetime
@@ -18,7 +19,7 @@ def main():
 
     data = YFinanceAPI().get_historical_bars(["AAPL", "MSFT", "GOOGL", "AMZN"], start=start, end=end)
 
-    feed = FeedManager(data.iterrows(), "localhost", "6000")
+    feed = FeedManager(data.iterrows(), os.environ["HOST"], os.environ["HTTP_PORT"])
     feed.start()
     delay = 2  # 2 seconds
 
