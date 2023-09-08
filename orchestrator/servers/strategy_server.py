@@ -1,6 +1,4 @@
 from .server import Server, Service
-from dxlib.strategies import Strategy
-import hashlib
 
 
 class StrategyServer(Server):
