@@ -15,6 +15,9 @@ services:
       dockerfile: Dockerfile
     networks:
       - delphos
+    ports:
+      - "5001:5001"
+      - "6001:6001"
 
 networks:
   delphos:

@@ -43,9 +43,10 @@ class Service:
             env[key] = value
 
         http_port = env.get('HTTP_PORT', None)
+        websocket_port = env.get('WEBSOCKET_PORT', None)
         if not http_port:
             return
-        ports = {"HTTP_PORT": http_port}
+        ports = {"HTTP_PORT": http_port, "WEBSOCKET_PORT": websocket_port}
         host = env.get('HOST', 'localhost')
 
         service = cls(image, ports, host, docker=docker)

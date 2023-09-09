@@ -17,12 +17,9 @@ def main():
                               websocket_port=websocket_port,
                               logger=logger)
     manager.start()
-
     try:
         while manager.is_alive():
-            with manager.server.exceptions as exceptions:
-                if exceptions:
-                    logger.exception(exceptions)
+            pass
     except KeyboardInterrupt:
         pass
     finally:
