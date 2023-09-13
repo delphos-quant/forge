@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import docker
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware

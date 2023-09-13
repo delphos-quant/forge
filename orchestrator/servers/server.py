@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 import subprocess
 
@@ -10,7 +12,7 @@ import yaml
 
 def build(compose_file: str, service_name: str, docker):
     if docker:
-        subprocess.run(['docker-compose', '-f', compose_file, 'build', service_name])
+        subprocess.run(['docker compose', '-f', compose_file, 'build', service_name])
         image = docker.images.get(service_name)
 
         return image
@@ -19,16 +21,15 @@ def build(compose_file: str, service_name: str, docker):
 
 
 class Service:
-    def __init__(self, image, ports: dict[str, tuple | list | int], host=None, docker: DockerClient = None):
+    def __init__(self, image, ports: dict[str, tuple | list | str], host=None, docker: DockerClient = None):
         self.image = image
         self.container: Container | None = None
 
         for name, port in ports.items():
-            if isinstance(port, int):
-                port = (port, port)
+            if isinstance(port, str):
                 ports[name] = port
 
-        self.ports: dict[str, tuple | list | int] = ports
+        self.ports: dict[str, tuple | list | str] = ports
         self.host = host if host else "localhost"
         self.docker = docker
 
@@ -44,10 +45,18 @@ class Service:
 
         http_port = env.get('HTTP_PORT', None)
         websocket_port = env.get('WEBSOCKET_PORT', None)
-        if not http_port:
+
+        if not http_port and not websocket_port:
             return
-        ports = {"HTTP_PORT": http_port, "WEBSOCKET_PORT": websocket_port}
-        host = env.get('HOST', 'localhost')
+
+        ports = {}
+
+        if http_port:
+            ports['HTTP_PORT'] = str(http_port)
+        if websocket_port:
+            ports['WEBSOCKET_PORT'] = str(websocket_port)
+
+        host = env.get('HOST', None)
 
         service = cls(image, ports, host, docker=docker)
         return service
@@ -113,7 +122,7 @@ class Server:
         server = cls(docker) if docker else cls()
         for service_name, data in services.items():
             try:
-                subprocess.run(['docker-compose', '-f', file_path, 'build', service_name])
+                subprocess.run(['docker', 'compose', '-f', file_path, 'build', service_name])
                 image = docker.images.get(service_name)
 
                 service = Service.from_file(image, docker)
