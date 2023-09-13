@@ -4,10 +4,13 @@ from dxlib import info_logger
 from dxlib.managers import FeedManager
 from alpaca.data.live import StockDataStream
 
+from dotenv import load_dotenv
+load_dotenv()
+
 
 def main():
     logger = info_logger("alpaca-markets-feed")
-    feed = FeedManager(None, logger=logger)
+    feed = FeedManager(None, port=os.environ.get("WEBSOCKET_PORT", None), logger=logger)
     feed.start()
 
     async def feed_handler(data):
@@ -22,10 +25,9 @@ def main():
     try:
         wss_client.run()
     except KeyboardInterrupt:
-        pass
+        wss_client.close()
     finally:
         feed.stop()
-        wss_client.close()
         logger.info("Feed manager has been shutdown.")
 
 

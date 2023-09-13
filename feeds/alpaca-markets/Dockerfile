@@ -11,5 +11,7 @@ ENV WEBSOCKET_PORT="6001"
 EXPOSE $HTTP_PORT
 EXPOSE $WEBSOCKET_PORT
 
+RUN pip install alpaca-py
+
 # Define the command to run when the container starts
 CMD ["python", "run.py"]

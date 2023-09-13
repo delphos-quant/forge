@@ -19,20 +19,17 @@ def main():
 
     data = YFinanceAPI().get_historical_bars(["AAPL", "MSFT", "GOOGL", "AMZN"], start=start, end=end)
 
-    feed = FeedManager(data.iterrows(), os.environ["HOST"], os.environ["HTTP_PORT"])
-    feed.start()
-    delay = 2  # 2 seconds
+    def add_delay(rows):
+        for row in rows:
+            yield row
+            time.sleep(2)
+
+    feed = FeedManager(add_delay(data.iterrows()), port=os.environ["WEBSOCKET_PORT"], logger=logger)
 
     try:
+        feed.start()
         while feed.is_alive():
-            if feed.is_socket_alive():
-                message = feed.send_snapshot()
-                if message is None:
-                    logger.info("Feed manager is empty.")
-                    break
-
-                logger.info(message)
-                time.sleep(delay)
+            pass
     except (TypeError, ConnectionError) as e:
         logger.exception(e)
     except KeyboardInterrupt:

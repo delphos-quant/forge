@@ -7,3 +7,4 @@ WORKDIR /feed
 # Install any additional dependencies if needed
 RUN pip install dxlib==1.0.10
 RUN pip install websocket-client
+RUN pip install python-dotenv
