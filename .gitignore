@@ -9,4 +9,5 @@
 *.pyc
 *.csv
 *.spec
+*.env
 ```

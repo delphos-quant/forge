@@ -7,19 +7,12 @@ from alpaca.data.live import StockDataStream
 
 def main():
     logger = info_logger("alpaca-markets-feed")
-    feed = FeedManager(None, os.environ["HOST"], os.environ["PORT"], retry=False, logger=logger)
-    try:
-        feed.start()
-        while not feed.is_socket_alive():
-            if feed.timeout:
-                raise ConnectionError("Feed manager timed out.")
-    except KeyboardInterrupt:
-        logger.info("User interrupted program")
-        feed.stop()
-        return
+    feed = FeedManager(None, logger=logger)
+    feed.start()
 
     async def feed_handler(data):
-        feed.send_snapshot(data)
+        logger.info(data)
+        # await feed.handle(data)
 
     wss_client = StockDataStream(os.environ["APCA-API-KEY-ID"], os.environ["APCA-API-SECRET-KEY"])
     wss_client.subscribe_bars(feed_handler, "AAPL")
@@ -32,8 +25,8 @@ def main():
         pass
     finally:
         feed.stop()
-        logger.info("Feed manager has been shutdown.")
         wss_client.close()
+        logger.info("Feed manager has been shutdown.")
 
 
 if __name__ == "__main__":

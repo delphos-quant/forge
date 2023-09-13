@@ -14,15 +14,17 @@ services:
       dockerfile: Dockerfile
     networks:
       - delphos
-#  alpaca-markets-feed:
-#    image: alpaca-markets-feed:latest
-#    depends_on:
-#      - feed
-#    build:
-#      context: ./alpaca-markets
-#      dockerfile: Dockerfile
-#    networks:
-#      - delphos
+  alpaca-markets-feed:
+    image: alpaca-markets-feed:latest
+    depends_on:
+      - feed
+    build:
+      context: ./alpaca-markets
+      dockerfile: Dockerfile
+    env_file:
+      - ./alpaca-markets/.env
+    networks:
+      - delphos
 
 networks:
   delphos:
