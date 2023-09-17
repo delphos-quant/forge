@@ -14,15 +14,16 @@ def date(date_str):
 
 def main():
     logger = info_logger("feed1")
-    start = date("2022-01-01")
+    start = date("2015-01-01")
     end = date("2022-12-31")
 
     data = YFinanceAPI().get_historical_bars(["AAPL", "MSFT", "GOOGL", "AMZN"], start=start, end=end)
 
     def add_delay(rows):
+        time.sleep(10)
         for row in rows:
             yield row
-            time.sleep(2)
+            time.sleep(0.1)
 
     feed = FeedManager(add_delay(data.iterrows()), port=os.environ["WEBSOCKET_PORT"], logger=logger)
 

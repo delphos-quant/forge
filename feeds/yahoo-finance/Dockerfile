@@ -6,7 +6,7 @@ COPY . .
 
 # Set environment variables or add any other strategy-specific configurations
 ENV STRATEGY_NAME="Yahoo Finance Feed"
-ENV WEBSOCKET_PORT="6002"
+ENV WEBSOCKET_PORT="7002"
 
 EXPOSE $WEBSOCKET_PORT
 

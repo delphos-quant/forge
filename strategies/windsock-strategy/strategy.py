@@ -4,7 +4,7 @@ import pandas as pd
 from dxlib import Strategy, History, Signal, TradeType
 
 
-class WindsockAllocationStrategy(Strategy):
+class WindsockAllocationStrategy:
     def __init__(self, predictor=None):
         super().__init__()
         self.predictor = predictor
@@ -15,105 +15,107 @@ class WindsockAllocationStrategy(Strategy):
     def predict(self, history: History):
         pass
 
-    def execute(self, idx, position: pd.Series, history: History) -> pd.Series:
+    def execute(self, idx, position: pd.Series, history: History) -> tuple[pd.Series, pd.Series]:
         # Define the lower and upper bounds for buy and sell quantities
         # For example, [(5, 10)] means no more than 5 can be sold, and no more than 10 can be bought of the security.
-        allocation_series = pd.Series([np.inf, np.inf], index=history.securities.values())
+        buy = pd.Series(1, index=history.securities.values())
+        sell = pd.Series(0, index=history.securities.values())
 
-        for security in history.securities.values():
-            # Sample allocation strategy: buy up to 10 shares, sell up to 5 shares
-            if position[security] == 0:
-                allocation_series[security] = (0, 1)
-            else:
-                allocation_series[security] = (1, 1)
+        for security in position.index:
+            if position[security] > 0:
+                sell[security] = 1
 
-        return allocation_series
+        return sell, buy
 
 
 class WindsockTradingStrategy(Strategy):
-    def __init__(self):
+    def __init__(self, short_window=14, long_window=60, liquidity_threshold=.9, growth_threshold=.05):
         super().__init__()
+        self.short_window = short_window
+        self.long_window = long_window
+        self.liquidity_threshold = liquidity_threshold
+        self.growth_threshold = growth_threshold
         self.allocation_strategy = WindsockAllocationStrategy()
 
     def execute(self, idx, position: pd.Series, history: History) -> pd.Series:
-        signals = pd.Series(Signal(TradeType.WAIT), index=history.securities.values())
         loc = history.df.index.get_loc(idx)
 
-        if loc >= self.volatility_window:
-            recent_prices = history.df.iloc[loc - self.volatility_window + 1:loc + 1]
+        if loc >= self.long_window:
+            signals = self.get_signals(history)
+            quantities = self.allocation_strategy.execute(idx, position, history)
 
-            for security in recent_prices.columns:
-                if self.meets_strategy_criteria(security, recent_prices):
-                    price = recent_prices[security].iloc[-1]
-                    signal = self.generate_trade_signal(price)
+            return self.set_quantity(signals, quantities)
+        else:
+            return pd.Series(Signal(TradeType.WAIT), index=history.securities.values())
 
-                    allocation_bounds = self.allocation_strategy.execute(idx, position, history)
-                    min_sell_qty, max_buy_qty = allocation_bounds[security]
+    @classmethod
+    def set_quantity(cls, signals: pd.Series, quantities: tuple[pd.Series, pd.Series]):
+        sell_quantities, buy_quantities = quantities
 
-                    if signal.trade_type == TradeType.BUY:
-                        signal.quantity = min(max_buy_qty, position[security] // price)
-                    elif signal.trade_type == TradeType.SELL:
-                        signal.quantity = min(min_sell_qty, position[security])
-
-                    signals[security] = signal
+        for security in signals.index:
+            if signals[security].trade_type == TradeType.BUY:
+                signals[security].quantity = buy_quantities[security]
+            elif signals[security].trade_type == TradeType.SELL:
+                signals[security].quantity = sell_quantities[security]
 
         return signals
 
-    def meets_strategy_criteria(self, security, recent_prices):
-        atr = self.calculate_atr(recent_prices[security])
+    def get_signals(self, history):
+        adtv = self.adtv(history)
+        breakout = self.breakout(history)
 
-        price = recent_prices[security].iloc[-1]
-        price_below_threshold = price < self.price_threshold
+        momentum = self.momentum(adtv).iloc[-1]
 
-        volume = recent_prices['Volume'][security].iloc[-1]
-        volume_above_threshold = volume > self.liquidity_threshold
+        signals = pd.Series(Signal(TradeType.WAIT), index=history.securities.values())
+        prices = history.df["Close"].iloc[-1]
 
-        mean_return = self.calculate_mean_return(recent_prices[security])
-        momentum = self.calculate_momentum(recent_prices[security])
+        for security in history.securities.values():
+            if breakout[security] and adtv[security].iloc[-1] > self.liquidity_threshold:
+                if momentum[security] > self.growth_threshold:
+                    signals[security] = Signal(TradeType.BUY, quantity=1, price=prices[security])
+                elif momentum[security] < -self.growth_threshold:
+                    signals[security] = Signal(TradeType.SELL, quantity=1, price=prices[security])
 
-        return (
-                atr > 0 and
-                price_below_threshold and
-                volume_above_threshold and
-                mean_return < 0 < momentum
-        )
+        return signals
 
-    @classmethod
-    def atr(cls, history, window=14):
+    def atr(self, history):
         high = history.df['High']
         low = history.df['Low']
         close = history.df['Close']
         tr = np.maximum(high - low, np.abs(high - close.shift(1)), np.abs(low - close.shift(1)))
 
-        atr = tr.rolling(window=window).mean()
+        atr = tr.rolling(window=self.short_window).mean()
 
         return atr
 
-    @classmethod
-    def adtv(cls, history, short_window=5, long_window=60):
+    def adtv(self, history):
         volume = history.df["Volume"]
 
-        adtv_short = volume.rolling(window=short_window).mean()
-        adtv_long = volume.rolling(window=long_window).mean()
+        relative_adtv = volume.rolling(window=self.short_window).mean() / volume.rolling(window=self.long_window).mean()
+        change = relative_adtv.pct_change()
 
-        adtv = adtv_short / adtv_long
-        log_change = np.log(adtv - adtv.shift(1))
+        mean = change.mean()
+        std = change.std().fillna(1)
 
-        market_log_change = log_change.mean()
-        market_log_volatility = log_change.std()
+        return (change - mean) / std
 
-        normalized_log_change = (log_change - market_log_change) / market_log_volatility
-
-        return normalized_log_change
-
-    @classmethod
-    def calculate_momentum(cls, prices, lookback_window=10):
-        returns = prices.pct_change().dropna()
-        momentum = (1 + returns).rolling(window=lookback_window).apply(np.prod, raw=True) - 1
+    def momentum(self, value):
+        change = value.pct_change()
+        momentum = (1 + change).rolling(window=self.short_window).apply(np.prod, raw=True) - 1
         return momentum
 
-    def generate_trade_signal(self, price):
-        if price > self.price_threshold:
-            return Signal(TradeType.BUY, 1, price)
-        else:
-            return Signal(TradeType.WAIT)
+    def breakout(self, history) -> pd.Series:
+        volatility = history.indicators.volatility()
+        upper, lower = history.indicators.bollinger_bands(self.short_window)
+        upper = upper["Close"]
+        lower = lower["Close"]
+        volatility = volatility["Close"]
+        var_mean = np.mean(upper - lower)
+        var_var = np.std(upper - lower) + 1e-6
+
+        var_historical = ((upper - lower) - var_mean) / var_var
+        var_normalized = (volatility - var_mean) / var_var
+
+        # PyCharm is complaining about the following line, but it works fine. (Add ignore to the end of the line to suppress the warning.)
+        # noinspection PyTypeChecker
+        return abs(var_normalized.iloc[-1]) > abs(var_historical.iloc[-1])

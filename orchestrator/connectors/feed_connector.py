@@ -3,7 +3,7 @@ from dxlib.managers import Connector
 
 
 def main():
-    c = Connector({"yfinance": {"uri": "ws://localhost:6002", "data_type": "snapshot"}}, http_port=4000)
+    c = Connector({"yfinance": {"uri": "ws://localhost:7002", "data_type": "snapshot"}}, http_port=8000)
     logger = dxlib.info_logger("connector")
 
     try:
