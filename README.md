@@ -1,9 +1,8 @@
-# Strategy Manager
+# dxlib Forge
 
-Strategy Manager is a FastAPI-based orchestration server that integrates with multiple managers. This allows users to manage different strategies via a centralized API.
+The Forge suite is a API-based orchestration server that integrates with multiple managers. This allows users to manage different strategies, feeds and portfolios via a centralized instance.
 
 ## Getting Started (Using Precompiled Executables)
-
 
 If you prefer not to go through the installation process or simply want to run the `strategy_manager` without having Python and the dependencies set up, you can use the precompiled executables. This is especially useful for deployment or sharing with users who might not be familiar with Python environments.
 
