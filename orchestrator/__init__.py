@@ -77,8 +77,7 @@ class Orchestrator:
             stopped = {server_name: [] for server_name in self.servers}
             status = await self.status()
             for server_name, server_status in status.items():
-                for service, service_status in server_status.items():
-                    service_name = str(service.image)
+                for service_name, service_status in server_status.items():
                     if service_status == "running":
                         running[server_name].append(service_name)
                     else:
@@ -88,7 +87,8 @@ class Orchestrator:
 
         @self.app.get("/{server}/")
         async def get_server_status(server: str):
-            return self.servers[server].status()
+            status = await self.servers[server].status()
+            return status
 
         @self.app.get("/{server}/{service}")
         async def get_service_endpoints(server: str,

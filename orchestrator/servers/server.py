@@ -143,9 +143,9 @@ class Server:
             service = self._services[service]
         return await service.post(endpoint, data)
 
-    def start(self, service=None):
-        if service:
-            self._services[service].start()
+    def start(self, service_name: str | None = None):
+        if service_name:
+            self._services[service_name].start()
             return
         for service in self._services.values():
             service.start()
@@ -159,12 +159,12 @@ class Server:
 
     async def status(self):
         status = {}
-        for service in self._services.values():
+        for service_name, service in self._services.items():
             try:
                 response = await self.get(service)
-                status[service] = "running" if response.status_code == 200 else "stopped"
+                status[service_name] = "running" if response.status_code == 200 else "stopped"
             except RuntimeError:
-                self.logger.warning(f"Service {service} not started")
-                status[service] = "stopped"
+                self.logger.warning(f"Service {service_name} not started")
+                status[service_name] = "stopped"
 
         return status
