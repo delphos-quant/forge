@@ -14,11 +14,11 @@ services:
       context: ./rsi-strategy
       dockerfile: Dockerfile
     networks:
-      - delphos
+      - forge
     ports:
       - "5001:5001"
       - "6001:6001"
 
 networks:
-  delphos:
+  forge:
     external: true

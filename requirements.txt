@@ -15,6 +15,5 @@ sniffio==1.3.0
 starlette==0.27.0
 typing_extensions==4.7.1
 uvicorn~=0.23.0
-dxlib~=1.0.6+1.git.g69e2c4b
 websocket-client~=1.6.2
 docker~=6.1.3
