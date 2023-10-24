@@ -110,12 +110,12 @@ class WindsockTradingStrategy(Strategy):
         upper = upper["Close"]
         lower = lower["Close"]
         volatility = volatility["Close"]
-        var_mean = np.mean(upper - lower)
-        var_var = np.std(upper - lower) + 1e-6
+        var_mean = (upper - lower).mean()
+        var_var = (upper - lower).std() + 1e-6
 
         var_historical = ((upper - lower) - var_mean) / var_var
         var_normalized = (volatility - var_mean) / var_var
 
-        # PyCharm is complaining about the following line, but it works fine. (Add ignore to the end of the line to suppress the warning.)
+        # PyCharm is complaining about the following line, but it works fine. (Added suppress to the warning.)
         # noinspection PyTypeChecker
         return abs(var_normalized.iloc[-1]) > abs(var_historical.iloc[-1])

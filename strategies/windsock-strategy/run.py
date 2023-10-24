@@ -1,4 +1,4 @@
-import os
+import pandas as pd
 
 import dxlib as dx
 from dxlib import StrategyManager
@@ -10,20 +10,26 @@ def main():
     logger = dx.info_logger()
     strategy = WindsockTradingStrategy()
 
-    manager = StrategyManager(strategy,
-                              server_port=int(os.environ["HTTP_PORT"]),
-                              websocket_port=int(os.environ["WEBSOCKET_PORT"]),
-                              logger=logger)
+    symbols = pd.read_csv("Symbols.csv")
+    print(symbols)
 
-    manager.start()
+    historical_bars = dx.api.YFinanceAPI().get_historical_bars(symbols.head(100).values.flatten(),)
+
+    history = dx.History(historical_bars)
+
+    manager = StrategyManager(strategy, logger=logger)
+    portfolio = dx.Portfolio(name="windsock")
+    portfolio.add_cash(100_000)
+    manager.register_portfolio(portfolio)
+
     try:
-        while manager.is_alive():
-            pass
+        manager.run(history)
     except KeyboardInterrupt:
         pass
     finally:
-        manager.stop()
-        logger.info("Windsock Strategy has been shutdown.")
+        logger.info("Windsock Strategy finished.")
+        logger.info(f"Portfolio value: {portfolio.position}")
+        logger.info(f"Portfolio cash: {portfolio.current_cash}")
 
 
 if __name__ == "__main__":
