@@ -28,7 +28,7 @@ def main():
         pass
     finally:
         logger.info("Windsock Strategy finished.")
-        logger.info(f"Portfolio value: {portfolio.position}")
+        logger.info(f"Position: {portfolio.position}")
         logger.info(f"Portfolio cash: {portfolio.current_cash}")
 
 
