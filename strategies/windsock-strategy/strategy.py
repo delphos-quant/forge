@@ -18,16 +18,19 @@ class WindsockAllocationStrategy:
     def execute(self, idx, position: pd.Series, history: History) -> tuple[pd.Series, pd.Series]:
         # Define the lower and upper bounds for buy and sell quantities
         # For example, [(5, 10)] means no more than 5 can be sold, and no more than 10 can be bought of the security.
-        buy = pd.Series(100, index=history.securities.values())
+        buy = pd.Series(50, index=history.securities.values())
         sell = pd.Series(0, index=history.securities.values())
 
         for security in position.index:
-            if position[security] > 100:
-                sell[security] = 100
+            if position[security] > 150:
+                sell[security] = 50
                 buy[security] = 200
-            elif position[security] > 10:
+            elif position[security] > 100:
+                sell[security] = 25
+                buy[security] = 100
+            elif position[security] > 50:
                 sell[security] = 10
-                buy[security] = 150
+                buy[security] = 50
             elif position[security] > 1:
                 sell[security] = 1
 
@@ -35,7 +38,7 @@ class WindsockAllocationStrategy:
 
 
 class WindsockTradingStrategy(Strategy):
-    def __init__(self, short_window=14, long_window=60, liquidity_threshold=.8, growth_threshold=.8):
+    def __init__(self, short_window=14, long_window=60, liquidity_threshold=.9, growth_threshold=.4):
         super().__init__()
         self.short_window = short_window
         self.long_window = long_window
