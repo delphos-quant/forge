@@ -1,29 +1,29 @@
 import os
 
 import dxlib as dx
-from dxlib import StrategyManager
-from dxlib.strategies import RsiStrategy
+from dxlib.interfaces.internal import StrategyHTTPInterface
+from dxlib.strategies.custom_strategies import RsiStrategy
 
 
 def main():
-    logger = dx.info_logger()
+    logger = dx.DebugLogger()
     server_port = int(os.environ["HTTP_PORT"])
-    websocket_port = int(os.environ["WEBSOCKET_PORT"])
 
     strategy = RsiStrategy(upper_bound=80, lower_bound=20)
 
-    manager = StrategyManager(strategy,
-                              server_port=server_port,
-                              websocket_port=websocket_port,
-                              logger=logger)
-    manager.start()
+    interface = StrategyHTTPInterface(strategy)
+
+    server = dx.HTTPServer(port=server_port, logger=logger)
+    server.add_interface(interface)
+
+    server.start()
     try:
-        while manager.is_alive():
+        while server.alive:
             pass
     except KeyboardInterrupt:
         pass
     finally:
-        manager.stop()
+        server.stop()
         logger.info("Strategy manager has been shutdown.")
 
 
