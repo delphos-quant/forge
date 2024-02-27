@@ -124,7 +124,7 @@ print("chart_session generated {}".format(chart_session))
 # Then send a message through the tunnel
 sendMessage(ws, "set_auth_token", [get_auth_token()])
 sendMessage(ws, "chart_create_session", [chart_session, ""])
-sendMessage(ws, "quote_create_session", [session])
+sendMessage(ws, "quote_create_session", [session, {"interval": "1D"}])
 sendMessage(ws, "quote_set_fields",
             [session, "ch", "chp", "current_session", "description", "local_description", "language", "exchange",
              "fractional", "is_tradable", "lp", "lp_time", "minmov", "minmove2", "original_name", "pricescale",
