@@ -24,8 +24,8 @@ def main(graphs=False, **kwargs):
 
     strategy = dx.strategies.RsiStrategy(reverse=True, **kwargs)
 
-    data = dx.YFinanceAPI().quote_tickers(tickers, start=start, end=end, cache=True)
-    ibov = dx.YFinanceAPI().quote_tickers(benchmark, start=start, end=end, cache=True)
+    data = dx.YFinanceAPI().historical(tickers, start=start, end=end, cache=True)
+    ibov = dx.YFinanceAPI().historical(benchmark, start=start, end=end, cache=True)
     df = data.df.droplevel("security")
 
     fig = make_subplots(rows=3, cols=1, specs=[[{"secondary_y": True}], [{"secondary_y": False}], [{"secondary_y": True}]])
