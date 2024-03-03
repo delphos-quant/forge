@@ -1,16 +1,16 @@
 import os
+import time
 
 import dxlib as dx
-from dxlib.interfaces.internal import StrategyInterface, MarketInterface
+from dxlib.interfaces.internal import MarketInterface
 from dxlib.strategies.custom_strategies import RsiStrategy
 
 
 def main():
     logger = dx.InfoLogger()
-    server_port = int(os.environ.get("STRATEGY_PORT", 8000))
     interface_port = int(os.environ.get("INTERFACE_PORT", 8001))
 
-    strategy = RsiStrategy()
+    strategy = RsiStrategy(field="price")
 
     interface = MarketInterface(interface_url=f"http://localhost:{interface_port}")
     args = {
@@ -18,19 +18,18 @@ def main():
         "start": "2024-02-01",
         "end": "2024-02-28",
     }
-    print(interface.request(interface.historical.endpoint, json=args))
 
-    server = dx.HTTPServer(port=server_port, logger=logger)
-    server.add_interface(interface)
+    executor = dx.Executor(strategy)
 
-    server.start()
     try:
-        while server.alive:
-            pass
+        while True:
+            bars = interface.request(interface.quote, json=args)
+            signals = executor.run(bars)
+            print(signals)
+            time.sleep(60)
     except KeyboardInterrupt:
         pass
     finally:
-        server.stop()
         logger.info("Strategy manager has been shutdown.")
 
 

@@ -43,7 +43,7 @@ def main(graphs=False, **kwargs):
     signals = executor.run(data)
     schema = signals.schema
     inventory_change = dx.InventoryHistory.stack(signals.df, schema)
-    assets_owned = inventory_change.unstack().apply({dx.StandardLevel.SECURITY: lambda x: x.cumsum()}, schema)
+    assets_owned = inventory_change.unstack().apply({dx.SchemaLevel.SECURITY: lambda x: x.cumsum()}, schema)
 
     x = assets_owned.df.index.get_level_values(0)
     y = assets_owned.df["quantity"].values.flatten()
@@ -57,8 +57,8 @@ def main(graphs=False, **kwargs):
             "cash": -(cost + transaction_cost * abs(row["inventory"].quantities))
         })
 
-    schema = dx.StandardSchema(
-        levels=[dx.StandardLevel.DATE],
+    schema = dx.Schema(
+        levels=[dx.SchemaLevel.DATE],
         fields=["cash"]
     )
 
@@ -66,7 +66,7 @@ def main(graphs=False, **kwargs):
 
     cash_value = cash_change.apply(lambda x: x.cumsum(), schema)
     inventory_value = assets_owned.apply_on(
-        data, lambda x, y: pd.DataFrame(x["quantity"] * y["close"], columns=["cash"])).apply({dx.StandardLevel.DATE: lambda x: x.sum()}, schema)
+        data, lambda x, y: pd.DataFrame(x["quantity"] * y["close"], columns=["cash"])).apply({dx.SchemaLevel.DATE: lambda x: x.sum()}, schema)
     portfolio_value = (starting_cash +
                        cash_value.df +
                        inventory_value.df)
