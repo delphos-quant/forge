@@ -56,7 +56,10 @@ current_time = pd.Timestamp.now()
 price.index = [current_time] * len(price)
 price_df = pd.concat([price_df, pd.DataFrame(price)])
 
-price_history.add(price_df)
+price_history.add(pd.DataFrame(
+    {"price": price.values[0]}, index=[(current_time, btc)])
+)
+
 
 def portfolio_value(idx):
     return portfolio_cash[idx] + assets_value[idx]
@@ -72,7 +75,9 @@ for seconds in range(200):
     price_df = pd.concat([price_df, pd.DataFrame(new_price)])
     average_price = new_price.mean()['price']
 
-    price_history.add(new_price)
+    price_history.add(pd.DataFrame(
+        {"price": new_price.values[0]}, index=[(current_time, btc)])
+    )
     signals = strategy.execute(((current_time, btc), quote), price_history)
     orders = dx.OrderInterface.execute_signals(signals)
     # get order_value
@@ -112,7 +117,7 @@ for seconds in range(200):
         with fig_col1:
             st.markdown("### Price Chart")
             fig = px.line(
-                data_frame=price_history,
+                data_frame=price_history.df.droplevel('security'),
                 y="price",
                 labels={"price": "Stock Price"},
             )
