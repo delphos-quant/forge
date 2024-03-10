@@ -6,6 +6,16 @@ The Forge suite is a API-based orchestration server that integrates with multipl
 
 If you prefer not to go through the installation process or simply want to run the `strategy_manager` without having Python and the dependencies set up, you can use the precompiled executables. This is especially useful for deployment or sharing with users who might not be familiar with Python environments.
 
+```bash
+sudo groupadd docker
+sudo usermod -aG docker $USER
+gnome-session-quit
+```
+
+```bash
+docker ps
+```
+
 1. Navigate to the [Releases section](https://github.com/delphos-quant/strategy-manager/releases).
 2. Download the appropriate file for your operating system:
     - `strategy_manager.sh` for Linux/macOS
