@@ -1,4 +1,4 @@
-# dxlib Forge
+# dxforge
 
 The Forge suite is a API-based orchestration server that integrates with multiple managers. This allows users to manage different strategies, feeds and portfolios via a centralized instance.
 
