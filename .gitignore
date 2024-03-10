@@ -11,11 +11,7 @@
 *.spec
 *.env
 ```
-/dxforge/.pybuild/cpython3_3.10_dxforge/.pydistutils.cfg
-/dxforge/VERSION
-/dxforge.egg-info/dependency_links.txt
-/dxforge.egg-info/PKG-INFO
-/dxforge.egg-info/requires.txt
-/dxforge.egg-info/SOURCES.txt
-/dxforge.egg-info/top_level.txt
-/debian/files
+dxforge/.pybuild/
+dxforge/VERSION
+dxforge.egg-info/
+debian/files
