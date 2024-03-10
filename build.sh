@@ -1,5 +1,8 @@
 #!/bin/bash
 
+ENTRY="dxforge/main.py"
+BUILD_DIR="build"
+# requirements are in requirements.txt
 create_executable() {
   if ! [ -x "$(command -v pyinstaller)" ]; then
     echo 'Error: pyinstaller is not installed.' >&2
@@ -7,25 +10,26 @@ create_executable() {
     pip install pyinstaller
   fi
 
-  echo 'Creating executable with PyInstaller...'
-  pyinstaller --onefile --name=strategy-manager orchestrator/server.py
+  echo 'Building module with PyInstaller...'
+  pyinstaller --noconfirm --name dxforge "$ENTRY"
 
-  if [ ! -f "./dist/strategy-manager" ]; then
-    echo 'Error: Failed to create the executable.' >&2
-    exit 1
-  fi
+  echo 'Cleaning up...'
+  rm -rf "$BUILD_DIR"
+
+  echo 'Executable created successfully!'
+  echo 'Run it with ./dist/dxforge/dxforge'
 }
 
 package() {
   # Create the .sh launcher
-  echo '#!/bin/sh' > dist/strategy-manager.sh
-  echo './strategy-manager' >> dist/strategy-manager.sh
-  echo './strategy-manager.specr' >> dist/strategy-manager.spec
-  chmod +x dist/strategy-manager.sh
+  echo '#!/bin/sh' > dist/dxforge.sh
+  echo './dxforge' >> dist/dxforge.sh
+  echo './dxforge.specr' >> dist/dxforge.spec
+  chmod +x dist/dxforge.sh
 
   # Create the tarball
   (
-    tar -czvf dist/strategy-manager.tar.gz \
+    tar -czvf dist/dxforge.tar.gz \
       --exclude='build' \
       --exclude='.git' \
       --exclude='.gitignore' \
@@ -36,15 +40,14 @@ package() {
       --exclude='build.sh' \
       --exclude='build.bat' \
       --exclude='requirements.txt' \
-      --exclude='strategy-manager.tar.gz' \
-      --transform='s,^,strategy-manager/,' \
+      --exclude='dxforge.tar.gz' \
+      --transform='s,^,dxforge/,' \
       *
   )
 }
 
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   create_executable
-  package
   echo 'Build and packaging process completed! You can find the tarball in the dist directory.'
 else
   echo "OS $OSTYPE not supported"
