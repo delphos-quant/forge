@@ -94,14 +94,12 @@ for seconds in range(200):
         # Create three columns
         kpi1, kpi2, kpi3 = st.columns(3)
 
-        # Fill in those three columns with respective metrics or KPIs
         kpi1.metric(
             label="Average Price 💹",
             value=f"${round(average_price, 2)}",
             delta=round(average_price) - 10,
         )
 
-        # how many time steps passed
         kpi2.metric(
             label="Time Step ⏱️",
             value=f"{seconds}",
@@ -117,7 +115,7 @@ for seconds in range(200):
         with fig_col1:
             st.markdown("### Price Chart")
             fig = px.line(
-                data_frame=price_history.df.droplevel('security'),
+                data_frame=price_df,
                 y="price",
                 labels={"price": "Stock Price"},
             )
@@ -139,7 +137,7 @@ for seconds in range(200):
             st.plotly_chart(fig)
 
         st.markdown("### Detailed Data View")
-        st.dataframe(price_history)
+        st.dataframe(price_df)
         time.sleep(1)
 
 if __name__ == "__main__":
