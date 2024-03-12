@@ -13,19 +13,19 @@ services:
       context: ./yahoo-finance
       dockerfile: Dockerfile
     networks:
-      - forge
-  alpaca-markets-feed:
-    image: alpaca-markets-feed:latest
-    depends_on:
-      - feed
-    build:
-      context: ./alpaca-markets
-      dockerfile: Dockerfile
-    env_file:
-      - ./alpaca-markets/.env
-    networks:
-      - forge
+      - dxforge
+#  alpaca-markets-feed:
+#    image: alpaca-markets-feed:latest
+#    depends_on:
+#      - feed
+#    build:
+#      context: ./alpaca-markets
+#      dockerfile: Dockerfile
+#    env_file:
+#      - ./alpaca-markets/.env
+#    networks:
+#      - forge
 
 networks:
-  forge:
+  dxforge:
     external: true

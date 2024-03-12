@@ -14,7 +14,7 @@ services:
       context: ./rsi-strategy
       dockerfile: Dockerfile
     networks:
-      - forge
+      - dxforge
     ports:
       - "5001:5001"
       - "6001:6001"

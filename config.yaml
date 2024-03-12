@@ -1,8 +1,7 @@
 {
   "servers": {
-    "feeds": { "path": "feeds/docker-compose.yaml" },
-    "strategies": { "path": "strategies/docker-compose.yaml" },
-#    "portfolios": { "path": "portfolios/docker-compose.yaml" },
+    "feeds": { "path": "instances/feeds/docker-compose.yaml" },
+    "strategies": { "path": "instances/strategies/docker-compose.yaml" },
   },
   "port": "8000",
   "host": "0.0.0.0"

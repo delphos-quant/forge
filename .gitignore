@@ -10,4 +10,8 @@
 *.csv
 *.spec
 *.env
-```
+
+dxforge/.pybuild/
+dxforge/VERSION
+dxforge.egg-info/
+debian/files

@@ -2,7 +2,9 @@
 FROM python:3.10
 
 # Set the working directory in the container
-WORKDIR /strategy
+WORKDIR /feed
+
+COPY requirements.txt requirements.txt
 
 # Install any additional dependencies if needed
-RUN pip install dxlib==1.0.12
+RUN pip install -r requirements.txt
