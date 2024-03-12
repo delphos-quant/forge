@@ -1,2 +1,2 @@
-dxlib==1.0.9
+dxlib==1.0.20
 websocket-client==1.6.2

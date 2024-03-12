@@ -1,8 +1,9 @@
+import yaml
+import httpx
 import docker
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-import httpx
-import yaml
 
 from .servers import Server, Service
 
