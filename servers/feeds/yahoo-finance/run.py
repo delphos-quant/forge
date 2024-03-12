@@ -15,10 +15,14 @@ def main():
 
     http_server.add_interface(interface)
     websocket_server.add_interface(interface)
+    websocket_server.listen(interface.quote_stream, tickers=["BTC-USD"], interval=5)
 
     try:
         http_server.start()
         websocket_server.start()
+
+        while not http_server.alive or not websocket_server.alive:
+            time.sleep(1)
 
         while http_server.alive and websocket_server.alive:
             time.sleep(1)

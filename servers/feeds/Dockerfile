@@ -5,6 +5,6 @@ FROM python:3.10
 WORKDIR /feed
 
 COPY requirements.txt requirements.txt
-
-# Install any additional dependencies if needed
 RUN pip install -r requirements.txt
+
+RUN pip install -e git+https://github.com/delphos-quant/dxlib.git@main#egg=dxlib
