@@ -1,1 +1,2 @@
 websocket-client==1.6.2
+git+https://github.com/delphos-quant/dxlib.git@main#egg=dxlib
