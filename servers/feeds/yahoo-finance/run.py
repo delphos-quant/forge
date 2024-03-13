@@ -20,6 +20,11 @@ def main():
         http_server.start()
         websocket_server.start()
 
+        while not (http_server.alive and websocket_server.alive):
+            time.sleep(1)
+
+        websocket_server.listen(interface.quote_stream, tickers=["BTC-USD", "NVDC34.SA"], interval=5)
+
         while http_server.alive and websocket_server.alive:
             time.sleep(1)
     except KeyboardInterrupt:
