@@ -20,5 +20,5 @@ services:
       - "6001:6001"
 
 networks:
-  forge:
+  dxforge:
     external: true

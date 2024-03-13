@@ -4,5 +4,7 @@ FROM python:3.10
 # Set the working directory in the container
 WORKDIR /strategy
 
+COPY requirements.txt .
+
 # Install any additional dependencies if needed
-RUN pip install dxlib==1.0.20
+RUN pip install -r requirements.txt
