@@ -45,8 +45,8 @@ class Orchestrator:
         with open(config_path, 'r') as file:
             config = yaml.safe_load(file)
 
-        self.port = config.get("port", 8000)
-        self.host = config.get("host", "")
+        self.port = config.get("port")
+        self.host = config.get("host")
         config_servers = config.get("servers", None)
 
         for server_name in config_servers:

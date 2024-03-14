@@ -1,6 +1,5 @@
 import asyncio
 import os
-import time
 from typing import AsyncGenerator
 
 import dxlib as dx
@@ -16,22 +15,28 @@ def main():
     interface = MarketInterface(host="0.0.0.0")
 
     executor = dx.Executor(strategy)
-    ws = None
     try:
-        ws, quotes = interface.listen(interface.quote_stream, port=interface_port, retry=5)
+        quotes: AsyncGenerator = interface.listen(interface.quote_stream, port=interface_port, retry=5)
 
-        async def await_history():
-            return await quotes.__anext__()
+        def get_first_element_sync(async_gen):
+            async def fetch_first_element():
+                async for item in async_gen:
+                    return item
 
-        history = asyncio.run(await_history())
+            loop = asyncio.get_event_loop()
+            return loop, loop.run_until_complete(fetch_first_element())
+
+        loop, history = get_first_element_sync(quotes)
         schema = history.schema
 
         async def bar_generator(history_quotes: AsyncGenerator):
-            async for history_quote in history_quotes:
-                print('bar!')
-                history_quote.schema = schema
-                for bar in history_quote:
-                    yield bar
+            try:
+                async for history_quote in history_quotes:
+                    history_quote.schema = schema
+                    for bar in history_quote:
+                        yield bar
+            except KeyboardInterrupt:
+                raise
 
         signals: AsyncGenerator = executor.run(bar_generator(quotes), input_schema=schema)
 
@@ -39,18 +44,12 @@ def main():
             async for signal in signals:
                 print(signal)
 
-        # thread
-        t = asyncio.run(print_signals())
-
-        while True:
-            time.sleep(0.1)
+        loop.run_until_complete(print_signals())
 
     except KeyboardInterrupt:
         pass
     finally:
-        if ws:
-            ws.close()
-        logger.info("Strategy manager has been shutdown.")
+        logger.info("Stopping strategy...")
 
 
 if __name__ == "__main__":

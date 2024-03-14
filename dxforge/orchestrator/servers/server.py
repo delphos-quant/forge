@@ -163,7 +163,7 @@ class Server:
             try:
                 response = await self.get(service)
                 status[service_name] = "running" if response.status_code == 200 else "stopped"
-            except RuntimeError:
+            except (RuntimeError, httpx.ConnectError):
                 self.logger.warning(f"Service {service_name} not started")
                 status[service_name] = "stopped"
 
