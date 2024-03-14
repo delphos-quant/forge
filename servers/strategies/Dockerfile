@@ -5,6 +5,6 @@ FROM python:3.10
 WORKDIR /strategy
 
 COPY requirements.txt .
+RUN pip install -r requirements.txt
 
 # Install any additional dependencies if needed
-RUN pip install -r requirements.txt

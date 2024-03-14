@@ -16,7 +16,7 @@ gnome-session-quit
 docker ps
 ```
 
-1. Navigate to the [Releases section](https://github.com/delphos-quant/strategy-manager/releases).
+1. Navigate to the [Releases section](https://github.com/divergex/strategy-manager/releases).
 2. Download the appropriate file for your operating system:
     - `strategy_manager.sh` for Linux/macOS
     - `strategy_manager.exe` for Windows

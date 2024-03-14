@@ -14,6 +14,9 @@ services:
       dockerfile: Dockerfile
     networks:
       - dxforge
+    ports:
+      - "8001:8001"
+      - "4001:4001"
 #  alpaca-markets-feed:
 #    image: alpaca-markets-feed:latest
 #    depends_on:

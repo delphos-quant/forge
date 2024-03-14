@@ -15,9 +15,6 @@ services:
       dockerfile: Dockerfile
     networks:
       - dxforge
-    ports:
-      - "5001:5001"
-      - "6001:6001"
 
 networks:
   dxforge:

@@ -38,7 +38,7 @@ setup(
     description="API-based suite for orchestrating quantitative analysis systems.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/delphos-quant/dxforge",
+    url="https://github.com/divergex/dxforge",
     author="Rafael Zimmer",
     author_email="rzimmerde@gmail.com",
     license="MIT",
