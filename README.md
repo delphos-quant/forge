@@ -1,10 +1,22 @@
 # dxforge
 
-The Forge suite is a API-based orchestration server that integrates with multiple managers. This allows users to manage different strategies, feeds and portfolios via a centralized instance.
+_An API-based orchestration platform by DivergeX_
 
-## Getting Started (Using Precompiled Executables)
+The dxforge suite is aimed at small teams and large teams that plan on scaling, reducing costs and maintenance of
+quantitative trading strategies.
 
-If you prefer not to go through the installation process or simply want to run the `strategy_manager` without having Python and the dependencies set up, you can use the precompiled executables. This is especially useful for deployment or sharing with users who might not be familiar with Python environments.
+The framework focuses on managing different strategies, their instances, feeds and portfolios
+via distributed and scalable nodes, without the need of managing them individually.
+
+With a K8s + Docker based approach, the framework is designed to be scalable, fault-tolerant and stress-tested.
+
+## Getting Started
+
+### Installation
+
+If you prefer not to go through the installation process or simply want to run the `strategy_manager` without having
+Python and the dependencies set up, you can use the precompiled executables. This is especially useful for deployment or
+sharing with users who might not be familiar with Python environments.
 
 ```bash
 sudo groupadd docker
@@ -16,7 +28,7 @@ gnome-session-quit
 docker ps
 ```
 
-1. Navigate to the [Releases section](https://github.com/delphos-quant/strategy-manager/releases).
+1. Navigate to the [Releases section](https://github.com/divergex/strategy-manager/releases).
 2. Download the appropriate file for your operating system:
     - `strategy_manager.sh` for Linux/macOS
     - `strategy_manager.exe` for Windows
@@ -24,15 +36,17 @@ docker ps
 
 ### For Linux/macOS Users
 
-1. First, you'll need to extract the compressed file. If you've downloaded the \`**strategy_manager_linux.tar.gz**\` from the releases, you can decompress it using the following command:
+1. First, you'll need to extract the compressed file. If you've downloaded the \`**strategy_manager_linux.tar.gz**\`
+   from the releases, you can decompress it using the following command:
 
 ```bash
 tar -xzvf strategy_manager_linux.tar.gz
 ```
 
-This will extract the contents, including strategy_manager.sh (the shell script) and the actual compiled binary strategy_manager.
+This will extract the contents, including strategy_manager.sh (the shell script) and the actual compiled binary
+strategy_manager.
 
-To run the strategy manager using the shell script:
+To run the dxforge using the shell script:
 
 2. Access the directory containing the sample strategy and feed managers
 
@@ -47,13 +61,13 @@ To run the strategy manager using the shell script:
     # e.g. ./dist/strategy-manager config.yaml
     ```
 
-Replace `[arguments]` with any command-line arguments you wish to pass to the strategy manager.
+Replace `[arguments]` with any command-line arguments you wish to pass to the dxforge.
 
 ### For Windows Users
 
 A standalone executable named `strategy-manager.exe` is available for Windows users.
 
-To run the strategy manager using the executable:
+To run the dxforge using the executable:
 
 1. Navigate to the directory containing the project files using the Command Prompt or PowerShell.
     ```powershell
@@ -67,41 +81,39 @@ To run the strategy manager using the executable:
     # e.g. .\dist\strategy-manager.exe config.yaml
     ```
 
-Replace `[arguments]` with any command-line arguments you wish to pass to the strategy manager.
+Replace `[arguments]` with any command-line arguments you wish to pass to the dxforge.
 
-**Note**: The first time you run these executables, your operating system might prompt you to verify if you trust software from the publisher. Ensure you trust the source (in this case, the `strategy_manager` project) before proceeding.
+**Note**: The first time you run these executables, your operating system might prompt you to verify if you trust
+software from the publisher. Ensure you trust the source (in this case, the `strategy_manager` project) before
+proceeding.
 
+## Developing
+### Compiling from Source
 
-## Getting Started (compiling from Source)
-
-### Requirements
+#### Requirements
 
 - Python 3.7+
-- FastAPI
-- httpx
-- yaml
-- uvicorn
-- dxlib (Sample usage provided in `my_strategy.py`)
+- `virtualenv` or any other virtual environment manager
 
 1. Clone the repository:
    ```bash
-   git clone github.com/dxlib/strategy-manager
+   git clone git@github.com:divergex/dxforge.git
    ```
 
 2. Navigate to the repository directory and create a virtual environment:
    ```bash
-   python -m venv venv
+   virtualenv venv
    ```
 
 3. Activate the virtual environment:
-   - For Linux/macOS:
-     ```bash
-     source venv/bin/activate
-     ```
-   - For Windows:
-     ```bash
-     venv\Scripts\activate
-     ```
+    - For Linux/macOS:
+      ```bash
+      source venv/bin/activate
+      ```
+    - For Windows:
+      ```bash
+      venv\Scripts\activate
+      ```
 
 4. Install required packages:
    ```bash
@@ -110,46 +122,50 @@ Replace `[arguments]` with any command-line arguments you wish to pass to the st
 
 ## Running the Server
 
-To start the orchestration server:
+To start the dxforge instance locally, run:
 
 ```bash
-python app.py config.yaml
+python dxforge/main.py config.yaml
 ```
 
 Optional command-line arguments:
+
 - `--host` to specify the host (default is `0.0.0.0`)
 - `--port` to specify the port (default is `8000`)
 
 ## Functionalities
 
 - **Listing Strategies**:  
-   Visit `http://localhost:8000/strategy/` to get a list of all available strategies.
+  Visit `http://localhost:8000/strategy/` to get a list of all available strategies.
 
 - **Refreshing Strategy Status**:  
-   POST request to `http://localhost:8000/strategy/` to refresh the status of all strategies.
+  POST request to `http://localhost:8000/strategy/` to refresh the status of all strategies.
 
 - **Proxy Get Routes for a Strategy**:  
-   GET request to `http://localhost:8000/strategy/{strategy}/` to get routes available for a strategy.
+  GET request to `http://localhost:8000/strategy/{strategy}/` to get routes available for a strategy.
 
-- **Proxy Get and Post Methods for a Strategy Endpoint**:  
-   - GET: `http://localhost:8000/strategy/{strategy}/{endpoint}`
-   - POST: `http://localhost:8000/strategy/{strategy}/{endpoint}` with appropriate data payload.
+- **Proxy Get and Post Methods for a Strategy Endpoint**:
+    - GET: `http://localhost:8000/strategy/{strategy}/{endpoint}`
+    - POST: `http://localhost:8000/strategy/{strategy}/{endpoint}` with appropriate data payload.
 
 ## Sample strategy for testing
 
-A sample strategy folder (`strategies/rsi-strategy`) is provided to demonstrate how to use the `dxlib` library. 
-This script uses historical stock data for a set of tickers, runs a simple RSI strategy on the data, and calculates a list of signals.
+A sample strategy folder (`strategies/rsi-strategy`) is provided to demonstrate how to use the `dxlib` library.
+This script uses historical stock data for a set of tickers, runs a simple RSI strategy on the data, and calculates a
+list of signals.
 
-To run the sample strategy manager instance:
+To run the sample dxforge instance:
+
 ```bash
 python strategies/rsi-strategy/run.py
 ```
 
-And in another terminal, run the strategy manager:
+And in another terminal, run the dxforge:
+
 ```bash
  python app.py config.yaml
 # or
-# ./dist/strategy_manager config.yaml
+# ./dist/dxforge config.yaml
 ```
 
 ## Configuration
@@ -158,6 +174,7 @@ Managers can be added or removed by modifying the a _yaml_ file.
 
 Example:
 _**config.yaml**_
+
 ```yaml
 {
   "feeds": "feeds/docker-compose.yaml",
@@ -167,7 +184,8 @@ _**config.yaml**_
 }
 ```
 
-In this configuration, `strategies` has a list of docker compose services that serve on different ports. These available ports can be accessed at `http://localhost:5000`.
+In this configuration, `strategies` has a list of docker compose services that serve on different ports. These available
+ports can be accessed at `http://localhost:5000`.
 
 ## Contributing
 

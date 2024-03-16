@@ -23,7 +23,7 @@ def main():
         while not (http_server.alive and websocket_server.alive):
             time.sleep(1)
 
-        websocket_server.listen(interface.quote_stream, tickers=["BTC-USD", "NVDC34.SA"], interval=5)
+        websocket_server.listen(interface.quote_stream, tickers=["BTC-USD", "NVDC34.SA"], interval=1)
 
         while http_server.alive and websocket_server.alive:
             time.sleep(1)
