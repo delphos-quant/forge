@@ -5,7 +5,12 @@ import docker
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from .servers import Server, Service
+from .controller import Controller
+from .node import Node
+
+
+class App:
+    pass
 
 
 class Orchestrator:
@@ -32,7 +37,7 @@ class Orchestrator:
         self.port = None
         self.host = None
         self.docker = docker.DockerClient() if docker else None
-        self.servers: dict[str, Server] = {}
+        self.servers: dict[str, Controller] = {}
 
         self.config(config_path)
         self.setup_routes()
@@ -50,11 +55,11 @@ class Orchestrator:
         config_servers = config.get("servers", None)
 
         for server_name in config_servers:
-            server = Server.from_file(config_servers[server_name]["path"], self.docker)
+            server = Controller.from_file(config_servers[server_name]["path"], self.docker)
             server.start()
             self.servers[server_name] = server
 
-    async def test_service(self, server: Server | str, service: Service | str):
+    async def test_service(self, server: Controller | str, service: Node | str):
         try:
             if isinstance(server, str):
                 server = self.servers[server]
