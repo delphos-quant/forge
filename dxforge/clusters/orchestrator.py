@@ -12,10 +12,6 @@ class Orchestrator:
         self.docker = docker.DockerClient() if docker else None
         self.controllers = {} if not controllers else controllers
 
-    @property
-    def client(self):
-        return httpx.AsyncClient()
-
     async def test_node(self, controller: Controller | str, node: Node | str):
         try:
             if isinstance(controller, str):

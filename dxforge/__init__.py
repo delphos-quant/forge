@@ -1,1 +1,1 @@
-from .forge import Forge
+from dxforge.forge import Forge

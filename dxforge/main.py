@@ -1,16 +1,14 @@
 import os
+
 from dotenv import load_dotenv
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
+
 import yaml
+import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 from dxforge import Forge
-
-
-load_dotenv()
-config_file = os.getenv("CONFIG_FILE", "config.yaml")
-config = yaml.safe_load(open(config_file, "r"))
+from dxforge.routers import controller
 
 
 class App(FastAPI):
@@ -34,26 +32,30 @@ class App(FastAPI):
             allow_headers=["*"],
         )
 
+        self.include_router(controller.router, prefix="/controllers", tags=["controller"])
 
-app = App()
+
+def main() -> FastAPI:
+    load_dotenv()
+    config_file = os.getenv("CONFIG_FILE", "config.yaml")
+    config = yaml.safe_load(open(config_file, "r"))
+
+    Forge.from_config(config)
+    return App()
 
 
-def main():
+if __name__ == "__main__":
+    app = main()
+
     host = os.getenv("HOST", None)
     port = int(os.getenv("PORT", 8000))
 
-    forge = Forge()
-
     try:
-        pass
         uvicorn.run(app, host=host, port=port)
     except KeyboardInterrupt:
         pass
     finally:
         pass
-
-
-if __name__ == "__main__":
-    main()
 else:
+    app = main()
     __all__ = ["app"]

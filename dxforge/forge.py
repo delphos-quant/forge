@@ -1,8 +1,7 @@
 from typing import Dict
 
 import docker
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+import httpx
 
 from .clusters import Orchestrator, Controller
 
@@ -21,10 +20,6 @@ class Forge(Singleton):
                  controllers: Dict[str, Controller] = None):
         self._orchestrators = [Orchestrator(controllers)]
 
-    @property
-    def orchestrators(self):
-        return self._orchestrators
-
     @classmethod
     def from_config(cls, config: dict) -> 'Forge':
         docker_client = docker.DockerClient() if docker else None
@@ -36,54 +31,15 @@ class Forge(Singleton):
 
         return cls(controllers)
 
-    def get_orchestrator(self) -> Orchestrator:
-        return self.orchestrators[0]
+    @property
+    def client(self):
+        return httpx.AsyncClient()
+
+    @property
+    def orchestrator(self):
+        return self._orchestrators[0]
+
 
     def stop(self):
-        for controller in self.controllers.values():
+        for controller in self.orchestrator.controllers.values():
             controller.stop()
-
-    def setup_routes(self):
-        @self.app.get("/")
-        async def get_status():
-            running = {controller_name: [] for controller_name in self.controllers}
-            stopped = {controller_name: [] for controller_name in self.controllers}
-            status = await self.status()
-            for controller_name, controller_status in status.items():
-                for node_name, node_status in controller_status.items():
-                    if node_status == "running":
-                        running[controller_name].append(node_name)
-                    else:
-                        stopped[controller_name].append(node_name)
-
-            return {"running": running, "stopped": stopped}
-
-        # @self.app.get("/controller/{controller}")
-        # async def get_controller_status(controller: str):
-        #     status = await self.controllers[controller].status()
-        #     return status
-        #
-        # @self.app.get("/controller/{controller}/{node}")
-        # async def get_node_endpoints(controller: str,
-        #                              node: str):
-        #     async with self.client:
-        #         response = await self.controllers[controller].get(node)
-        #         return response.json()
-        #
-        # @self.app.get("/controller/{controller}/{node}/{endpoint}")
-        # async def get_node_endpoints(controller: str,
-        #                              node: str,
-        #                              endpoint: str):
-        #     async with self.client:
-        #         response = await self.controllers[controller].get(node, endpoint=f"/{endpoint}")
-        #         return response.json()
-        #
-        # @self.app.post("/controller/{controller}/{node}/{endpoint}")
-        # async def get_node_endpoints(controller: str,
-        #                              node: str,
-        #                              endpoint: str,
-        #                              request: Request):
-        #     data = await request.json()
-        #     async with self.client:
-        #         response = await self.controllers[controller].post(node, endpoint=f"/{endpoint}", data=data)
-        #         return response.json()

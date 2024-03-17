@@ -1,4 +1,5 @@
 import subprocess
+from dataclasses import dataclass
 
 import httpx
 from docker import DockerClient
@@ -13,6 +14,47 @@ def build(compose_file: str, service_name: str, docker):
         return image
     else:
         raise NotImplementedError("No script manager implemented")
+
+
+@dataclass
+class InstanceConfig:
+    def __init__(self,
+                 path: str,
+                 tag: str,
+                 ports: dict[str, tuple | list | str],
+                 host: str = "localhost",
+                 env: dict[str, str] = None):
+        self.path = path
+        self.tag = tag
+        self.ports = ports
+        self.host = host
+        self.env = env
+
+
+class Instance:
+    def __init__(self,
+                 config: InstanceConfig = None,
+                 docker_client: DockerClient = None
+                 ):
+        self.config = config
+        self.docker_client = docker_client
+
+    def build(self):
+        return self.docker_client.images.build(
+            path=self.config.path,
+            tag=self.config.tag
+        )
+
+    def start(self, tag: str = None) -> Container:
+        return self.docker_client.containers.run(
+            tag if tag else self.config.tag,
+            ports={port: port for port in self.config.ports.values()},
+            detach=True,
+        )
+
+    def stop(self, container: Container):
+        container.stop()
+        container.remove()
 
 
 class Node:
