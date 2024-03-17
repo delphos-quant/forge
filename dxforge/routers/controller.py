@@ -11,16 +11,7 @@ def get_controller(name: str):
 
 @router.get("/")
 async def get_status():
-    running = {controller_name: [] for controller_name in forge.orchestrator.controllers}
-    stopped = {controller_name: [] for controller_name in forge.orchestrator.controllers}
-    status = await forge.orchestrator.status()
-    for controller_name, controller_status in status.items():
-        for node_name, node_status in controller_status.items():
-            if node_status == "running":
-                running[controller_name].append(node_name)
-            else:
-                stopped[controller_name].append(node_name)
-    return {"running": running, "stopped": stopped}
+    return forge.orchestrator.status()
 
 
 @router.get("/{controller}")

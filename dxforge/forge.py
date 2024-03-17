@@ -39,7 +39,6 @@ class Forge(Singleton):
     def orchestrator(self):
         return self._orchestrators[0]
 
-
     def stop(self):
         for controller in self.orchestrator.controllers.values():
             controller.stop()
