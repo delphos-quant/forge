@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import subprocess
 
 from docker import DockerClient
 from docker.errors import ImageNotFound
@@ -11,23 +10,20 @@ from .node import Node
 
 
 class Controller:
-    def __init__(self, docker: DockerClient = None):
+    def __init__(self, docker_client: DockerClient = None):
         self._nodes: dict[str, Node] = {}
-        self.docker = docker
+        self.docker_client = docker_client
         self.logger = logging.Logger(__name__)
 
     @classmethod
-    def from_file(cls, file_path: str, docker: DockerClient):
+    def from_file(cls, file_path: str, docker_client: DockerClient):
         config = yaml.safe_load(open(file_path, "r"))
         services = config.get("services", None)
 
-        controller = cls(docker) if docker else cls()
+        controller = cls(docker_client) if docker_client else cls()
         for service_name, data in services.items():
             try:
-                subprocess.run(['docker', 'compose', '-f', file_path, 'build', service_name])
-                image = docker.images.get(service_name)
-
-                service = Node.from_file(image, docker)
+                service = Node.from_dict(data, docker_client)
                 if service:
                     controller.nodes[service_name] = service
             except ImageNotFound:
@@ -36,18 +32,23 @@ class Controller:
         return controller
 
     @property
-    def nodes(self):
+    def nodes(self) -> dict[str, Node]:
         return self._nodes
 
-    async def get(self, service: str | Node, endpoint: str = "/"):
-        if isinstance(service, str):
-            service = self.nodes[service]
-        return await service.get(endpoint)
+    def get_interface(self, node: str | Node, name: str = None):
+        if isinstance(node, str):
+            node = self.nodes[node]
+        return node.get_interface(name)
 
-    async def post(self, service: str | Node, endpoint: str = "/", data=None):
-        if isinstance(service, str):
-            service = self.nodes[service]
-        return await service.post(endpoint, data)
+    def build(self, node_name: str | None = None):
+        if node_name:
+            node = self.nodes[node_name]
+            for node in node.config.depends_on:
+                self.nodes[node].build()
+            self.nodes[node_name].build()
+            return
+        for node in self.nodes.values():
+            node.build()
 
     def start(self, service_name: str | None = None):
         if service_name:
@@ -70,15 +71,14 @@ class Controller:
                 "running": []
             }
         }
-        for service_name, service in self.nodes.items():
+        for node_name, node in self.nodes.items():
             try:
-                response = await self.get(service)
-                if response.status_code == 200:
-                    status["nodes"]["running"].append(service_name)
+                if node.alive:
+                    status["nodes"]["running"].append(node_name)
                 else:
-                    status["nodes"]["stopped"].append(service_name)
+                    status["nodes"]["stopped"].append(node_name)
             except RuntimeError:
-                self.logger.warning(f"Service {service_name} not started")
-                status["nodes"]["stopped"].append(service_name)
+                self.logger.warning(f"Node {node_name} not started")
+                status["nodes"]["stopped"].append(node_name)
 
         return status

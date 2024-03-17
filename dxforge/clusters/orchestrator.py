@@ -12,17 +12,26 @@ class Orchestrator:
         self.docker = docker.DockerClient() if docker else None
         self.controllers = {} if not controllers else controllers
 
-    async def test_node(self, controller: Controller | str, node: Node | str):
+    def node_status(self, controller: Controller | str = None, node: Node | str = None):
         try:
             if isinstance(controller, str):
                 controller = self.controllers[controller]
-            response = await controller.get(node)
-            return response.status_code == 200
+            return controller.nodes[node].alive if isinstance(node, str) else node.alive
         except (httpx.HTTPError, httpx.InvalidURL):
             return False
 
-    async def status(self):
-        status = {}
-        for controller_name, controller in self.controllers.items():
-            status[controller_name] = await controller.status()
+    def status(self):
+        status = {
+            controller_name: {
+                "stopped": [],
+                "running": []
+            }
+            for controller_name in self.controllers
+        }
+        for controller in self.controllers:
+            for node in self.controllers[controller].nodes:
+                if self.controllers[controller].nodes[node].alive:
+                    status[controller]["running"].append(node)
+                else:
+                    status[controller]["stopped"].append(node)
         return status
