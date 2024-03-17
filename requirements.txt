@@ -24,3 +24,4 @@ pandas~=1.5.3
 numpy~=1.23.5
 plotly~=5.19.0
 streamlit~=1.31.1
+python-dotenv~=0.21.0

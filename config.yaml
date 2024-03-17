@@ -1,8 +1,6 @@
 {
   "controllers": {
-    "feeds": "instances/feeds/docker-compose.yaml",
-    "strategies": "instances/strategies/docker-compose.yaml",
-  },
-  "port": "8000",
-  "host": "0.0.0.0"
+    "feeds": "controllers/feeds/docker-compose.yaml",
+    "strategies": "controllers/strategies/docker-compose.yaml",
+  }
 }
