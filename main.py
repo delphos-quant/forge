@@ -3,22 +3,23 @@ from typing import Dict
 from dotenv import load_dotenv
 
 import docker
+import uvicorn
 import yaml
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from orchestrator import Orchestrator
-from orchestrator.controller import Controller
+from src import Orchestrator, Controller
 
 
-class App(FastAPI, Orchestrator):
+class Forge(Orchestrator):
     def __init__(self,
                  controllers: Dict[str, Controller] = None,
                  origins=None,
                  *args,
                  **kwargs):
-        super(FastAPI).__init__(*args, **kwargs)
-        super(Orchestrator).__init__(controllers)
+        super().__init__(controllers)
+        self.app = FastAPI(*args, **kwargs)
+
         if origins is None:
             origins = [
                 "http://localhost:80",
@@ -28,16 +29,17 @@ class App(FastAPI, Orchestrator):
                 "http://localhost:8080",
             ]
 
-        self.add_middleware(
+        self.app.add_middleware(
             CORSMiddleware,
             allow_origins=origins,
             allow_credentials=True,
             allow_methods=["*"],
             allow_headers=["*"],
         )
+        self.setup_routes()
 
     @classmethod
-    def from_config(cls, config: dict) -> 'App':
+    def from_config(cls, config: dict) -> 'Forge':
         docker_client = docker.DockerClient() if docker else None
 
         controllers = {}
@@ -51,8 +53,8 @@ class App(FastAPI, Orchestrator):
         for controller in self.controllers.values():
             controller.stop()
 
-    def add_routes(self):
-        @self.get("/")
+    def setup_routes(self):
+        @self.app.get("/")
         async def get_status():
             running = {controller_name: [] for controller_name in self.controllers}
             stopped = {controller_name: [] for controller_name in self.controllers}
@@ -66,19 +68,27 @@ class App(FastAPI, Orchestrator):
 
             return {"running": running, "stopped": stopped}
 
-        @self.get("/{controller}/")
+        @self.app.get("/{resource}")
+        async def get_resource(resource: str):
+            if resource == 'favicon.ico':
+                icon = open('src/assets/favicon.ico', 'rb')
+                return icon.read()
+            else:
+                return {"error": "Resource not found"}
+
+        @self.app.get("/controller/{controller}")
         async def get_controller_status(controller: str):
             status = await self.controllers[controller].status()
             return status
 
-        @self.get("/{controller}/{node}")
+        @self.app.get("/controller/{controller}/{node}")
         async def get_node_endpoints(controller: str,
                                      node: str):
             async with self.client:
                 response = await self.controllers[controller].get(node)
                 return response.json()
 
-        @self.get("/{controller}/{node}/{endpoint}")
+        @self.app.get("/controller/{controller}/{node}/{endpoint}")
         async def get_node_endpoints(controller: str,
                                      node: str,
                                      endpoint: str):
@@ -86,7 +96,7 @@ class App(FastAPI, Orchestrator):
                 response = await self.controllers[controller].get(node, endpoint=f"/{endpoint}")
                 return response.json()
 
-        @self.post("/{controller}/{node}/{endpoint}")
+        @self.app.post("/controller/{controller}/{node}/{endpoint}")
         async def get_node_endpoints(controller: str,
                                      node: str,
                                      endpoint: str,
@@ -98,24 +108,27 @@ class App(FastAPI, Orchestrator):
 
 
 def main():
-    import uvicorn
-
     load_dotenv()
 
     host = os.getenv("HOST", None)
     port = int(os.getenv("PORT", 8000))
+
     config_file = os.getenv("CONFIG_FILE", "config.yaml")
     config = yaml.safe_load(open(config_file, "r"))
 
-    app = App.from_config(config)
+    forge = Forge.from_config(config)
 
     try:
-        uvicorn.run(app, host=host, port=port)
+        uvicorn.run(forge.app, host=host, port=port)
     except KeyboardInterrupt:
         pass
     finally:
-        app.stop()
+        forge.stop()
 
 
 if __name__ == "__main__":
     main()
+else:
+    forge = Forge.from_config(yaml.safe_load(open("config.yaml", "r")))
+    app = forge.app
+    __all__ = ["app"]

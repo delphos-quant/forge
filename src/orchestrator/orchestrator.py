@@ -1,6 +1,5 @@
 from typing import Dict
 
-import yaml
 import httpx
 import docker
 
@@ -9,7 +8,7 @@ from .node import Node
 
 
 class Orchestrator:
-    def __init__(self, controllers: Dict[str, Controller] = None):
+    def __init__(self, controllers: Dict[str, Controller]):
         self.docker = docker.DockerClient() if docker else None
         self.controllers = {} if not controllers else controllers
 
