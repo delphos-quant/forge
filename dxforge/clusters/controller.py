@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 
 from docker import DockerClient
 from docker.errors import ImageNotFound
@@ -16,19 +17,28 @@ class Controller:
         self.logger = logging.Logger(__name__)
 
     @classmethod
-    def from_file(cls, file_path: str, docker_client: DockerClient):
-        config = yaml.safe_load(open(file_path, "r"))
+    def from_file(cls, controller_path: str, docker_client: DockerClient):
+        config = yaml.safe_load(open(controller_path, "r"))
         services = config.get("services", None)
 
         controller = cls(docker_client) if docker_client else cls()
         for node_name, data in services.items():
             try:
-                if node := Node.from_dict(data):
+                if node := Node.from_dict(data, cls.get_node_path(data, controller_path)):
                     controller.nodes[node_name] = node
             except ImageNotFound:
                 continue
 
         return controller
+
+    @staticmethod
+    def get_node_path(data, controller_path):
+        context = data['build'].get('context')
+        if context == ".":
+            node_path = os.path.dirname(controller_path)
+        else:
+            node_path = os.path.join(os.path.dirname(controller_path), data['build'].get('context'))
+        return node_path
 
     @property
     def nodes(self) -> dict[str, Node]:

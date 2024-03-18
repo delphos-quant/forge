@@ -10,7 +10,7 @@ services:
     depends_on:
       - feed
     build:
-      context: ./yahoo-finance
+      context: yahoo-finance
       dockerfile: Dockerfile
     networks:
       - dxforge

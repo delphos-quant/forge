@@ -66,17 +66,17 @@ async def post_node_instruction(request: Request,
     try:
         response = {}
         if "create" in instructions:
-            status = node.create_instance()
-            response["created"] = status
+            status = str(node.create_instance())
+            response['create'] = status
         if "build" in instructions:
             status = controller.build(node)
-            response["built"] = status
+            response['build'] = status
         if "start" in instructions:
             status = controller.start(node)
-            response["started"] = status
+            response['start'] = status
         if "stop" in instructions:
             status = controller.stop(node)
-            response["stopped"] = status
+            response['stop'] = status
         # if response is empty, no valid instructions were provided
         if not response:
             raise HTTPException(status_code=400, detail="invalid instruction")
