@@ -1,6 +1,7 @@
 import subprocess
 from dataclasses import dataclass
-from typing import Tuple
+from typing import Tuple, Dict
+from uuid import uuid4
 
 import httpx
 from docker import DockerClient
@@ -25,13 +26,11 @@ class NodeConfig:
                  tag: str,
                  depends_on: list[str] = None,
                  ports: dict[str, tuple | int] = None,
-                 host: str = "localhost",
                  env: dict[str, str] = None):
         self.path = path
         self.tag = tag
         self.depends_on = depends_on if depends_on else []
         self.ports = ports if ports else {}
-        self.host = host
         self.env = env
 
 
@@ -42,6 +41,12 @@ class Instance:
         self.config = config
         self._container: Container | None = None
         self._image: Image | None = None
+
+    @property
+    def alive(self):
+        if not self._container:
+            return False
+        return self._container.status == "running"
 
     def build(self, docker_client: DockerClient) -> Image:
         return docker_client.images.build(
@@ -65,30 +70,29 @@ class Instance:
             self._container = None
 
     @property
-    def alive(self):
-        if not self._container:
-            return False
-        return self._container.status == "running"
+    def info(self):
+        return {
+            "host": self._container.attrs["NetworkSettings"]["IPAddress"] if self._container else None,
+            "ports": self.config.ports
+        }
 
 
 class Node:
-    def __init__(self, config: NodeConfig, docker_client: DockerClient = None):
+    def __init__(self, config: NodeConfig):
         self._config = config
-        self.docker_client = docker_client
-        self.instances = {}
+        self.instances: Dict[str, Instance] = {}
 
     @classmethod
-    def from_dict(cls, config: dict, docker_client: DockerClient):
+    def from_dict(cls, config: dict):
         config = NodeConfig(
             path=config.get("path"),
             tag=config.get("tag"),
             depends_on=config.get("depends_on"),
             ports=config.get("ports"),
-            host=config.get("host"),
             env=config.get("env")
         )
 
-        return cls(config, docker_client)
+        return cls(config)
 
     @property
     def client(self):
@@ -102,31 +106,44 @@ class Node:
     def alive(self):
         return any([instance.alive for instance in self.instances.values()])
 
-    def add_instance(self, uuid: str):
+    @property
+    def info(self):
+        return {
+            "alive": self.alive,
+            "instances": {uuid: instance.alive for uuid, instance in self.instances.items()},
+            "interface": {
+                "ports": self._config.ports
+            }
+        }
+
+    def create_instance(self, uuid: str = None):
+        if uuid is None:
+            uuid = uuid4()
         self.instances[uuid] = Instance(self._config)
 
-    def build(self):
-        if self.docker_client:
-            for instance in self.instances.values():
-                instance.build(self.docker_client)
-        else:
-            raise NotImplementedError("No script manager implemented")
+        return uuid
 
-    def start(self):
-        if self.docker_client:
-            for instance in self.instances.values():
-                instance.start(self.docker_client)
-        else:
-            raise NotImplementedError("No script manager implemented")
+    def build(self, docker_client: DockerClient):
+        for instance in self.instances.values():
+            instance.build(docker_client)
+
+    def start(self, docker_client: DockerClient):
+        status = {}
+        for uuid, instance in self.instances.items():
+            try:
+                instance.start(docker_client)
+                status[uuid] = "started"
+            except Exception as e:
+                status[uuid] = e
+        return {
+            "instances": status,
+        }
 
     def stop(self):
-        if self.docker_client:
-            for instance in self.instances.values():
-                instance.stop()
-        else:
-            raise NotImplementedError("No script manager implemented")
+        for instance in self.instances.values():
+            instance.stop()
 
-    def get_interface(self, name=None) -> Tuple[str, int]:
+    def get_interface(self, name=None) -> Tuple[int, str]:
         if name is None:
             raise NotImplementedError("No instance union implemented")
-        return self._config.host, self._config.ports[name]
+        return self._config.ports[name], self.instances[name].info["host"]

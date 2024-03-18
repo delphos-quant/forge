@@ -21,11 +21,10 @@ class Controller:
         services = config.get("services", None)
 
         controller = cls(docker_client) if docker_client else cls()
-        for service_name, data in services.items():
+        for node_name, data in services.items():
             try:
-                service = Node.from_dict(data, docker_client)
-                if service:
-                    controller.nodes[service_name] = service
+                if node := Node.from_dict(data):
+                    controller.nodes[node_name] = node
             except ImageNotFound:
                 continue
 
@@ -40,31 +39,20 @@ class Controller:
             node = self.nodes[node]
         return node.get_interface(name)
 
-    def build(self, node_name: str | None = None):
-        if node_name:
-            node = self.nodes[node_name]
-            for node in node.config.depends_on:
-                self.nodes[node].build()
-            self.nodes[node_name].build()
-            return
-        for node in self.nodes.values():
-            node.build()
+    def build(self, node: Node):
+        for depend_node_name in node.config.depends_on:
+            depend_node = self.nodes[depend_node_name]
+            self.build(depend_node)
+        return node.build(self.docker_client)
 
-    def start(self, service_name: str | None = None):
-        if service_name:
-            self.nodes[service_name].start()
-            return
-        for service in self.nodes.values():
-            service.start()
+    def start(self, node: Node):
+        return node.start(self.docker_client)
 
-    def stop(self, service=None):
-        if service:
-            self.nodes[service].stop()
-            return
-        for service in self.nodes.values():
-            service.stop()
+    @staticmethod
+    def stop(node: Node):
+        return node.stop()
 
-    async def status(self):
+    def status(self):
         status = {
             "nodes": {
                 "stopped": [],
@@ -82,3 +70,9 @@ class Controller:
                 status["nodes"]["stopped"].append(node_name)
 
         return status
+
+    @property
+    def info(self):
+        return {
+            "nodes": {node_name: node.info for node_name, node in self.nodes.items()},
+        }

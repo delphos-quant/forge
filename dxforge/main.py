@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI
 
 from dxforge import Forge
-from dxforge.routers import controller
+from dxforge.routers import cluster
 
 
 class App(FastAPI):
@@ -32,7 +32,7 @@ class App(FastAPI):
             allow_headers=["*"],
         )
 
-        self.include_router(controller.router, prefix="/controllers", tags=["controller"])
+        self.include_router(cluster.router, prefix="/cluster", tags=["cluster"])
 
 
 def main() -> FastAPI:
