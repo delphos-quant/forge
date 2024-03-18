@@ -11,7 +11,7 @@ from .node import Node
 
 
 class Controller:
-    def __init__(self, docker_client: DockerClient = None):
+    def __init__(self, docker_client: DockerClient):
         self._nodes: dict[str, Node] = {}
         self.docker_client = docker_client
         self.logger = logging.Logger(__name__)
@@ -21,7 +21,7 @@ class Controller:
         config = yaml.safe_load(open(controller_path, "r"))
         services = config.get("services", None)
 
-        controller = cls(docker_client) if docker_client else cls()
+        controller = cls(docker_client)
         for node_name, data in services.items():
             try:
                 if node := Node.from_dict(data, cls.get_node_path(data, controller_path)):
@@ -49,17 +49,17 @@ class Controller:
             node = self.nodes[node]
         return node.get_interface(name)
 
-    def build(self, node: Node):
+    def build_node(self, node: Node):
         for depend_node_name in node.config.depends_on:
             depend_node = self.nodes[depend_node_name]
-            self.build(depend_node)
+            self.build_node(depend_node)
         return node.build(self.docker_client)
 
-    def start(self, node: Node):
+    def start_node(self, node: Node):
         return node.start(self.docker_client)
 
     @staticmethod
-    def stop(node: Node):
+    def stop_node(node: Node):
         return node.stop()
 
     def status(self):
@@ -67,6 +67,9 @@ class Controller:
             "nodes": {
                 "stopped": [],
                 "running": []
+            },
+            "docker-client-containers": {
+                container.name: container.status for container in self.docker_client.containers.list()
             }
         }
         for node_name, node in self.nodes.items():
@@ -86,3 +89,7 @@ class Controller:
         return {
             "nodes": {node_name: node.info for node_name, node in self.nodes.items()},
         }
+
+    def stop(self):
+        for node in self.nodes.values():
+            self.stop_node(node)

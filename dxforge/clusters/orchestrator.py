@@ -1,3 +1,4 @@
+import asyncio
 from typing import Dict
 
 import httpx
@@ -8,9 +9,9 @@ from .node import Node
 
 
 class Orchestrator:
-    def __init__(self, controllers: Dict[str, Controller]):
-        self.docker = docker.DockerClient() if docker else None
-        self.controllers = {} if not controllers else controllers
+    def __init__(self, controllers: Dict[str, Controller], docker_client: docker.DockerClient):
+        self.controllers = controllers
+        self.docker_client = docker_client
 
     def node_status(self, controller: Controller | str = None, node: Node | str = None):
         try:
@@ -41,3 +42,14 @@ class Orchestrator:
         return {
             "controllers": {controller: self.controllers[controller].info for controller in self.controllers},
         }
+
+    @staticmethod
+    async def stop_containers(container):
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, container.stop)
+
+    async def stop(self):
+        await asyncio.gather(
+            *[self.stop_containers(container) for container in self.docker_client.containers.list()]
+        )
+        self.docker_client.close()

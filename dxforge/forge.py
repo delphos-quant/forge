@@ -1,24 +1,16 @@
-from typing import Dict
+from typing import List
 
 import docker
 import httpx
 
 from .clusters import Orchestrator, Controller
+from .utils import SingletonMeta
 
 
-class Singleton:
-    _instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if cls._instance is None:
-            cls._instance = super().__new__(cls)
-        return cls._instance
-
-
-class Forge(Singleton):
+class Forge(metaclass=SingletonMeta):
     def __init__(self,
-                 controllers: Dict[str, Controller] = None):
-        self._orchestrators = [Orchestrator(controllers)]
+                 orchestrators: List[Orchestrator]):
+        self._orchestrators = orchestrators
 
     @classmethod
     def from_config(cls, config: dict) -> 'Forge':
@@ -28,8 +20,9 @@ class Forge(Singleton):
 
         for name, path in config.get("controllers", {}).items():
             controllers[name] = Controller.from_file(path, docker_client)
+        orchestrator = Orchestrator(controllers, docker_client)
 
-        return cls(controllers)
+        return cls([orchestrator])
 
     @property
     def client(self):
@@ -39,6 +32,5 @@ class Forge(Singleton):
     def orchestrator(self):
         return self._orchestrators[0]
 
-    def stop(self):
-        for controller in self.orchestrator.controllers.values():
-            controller.stop()
+    async def stop(self):
+        await self._orchestrators[0].stop()

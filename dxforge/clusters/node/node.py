@@ -26,11 +26,17 @@ class Node:
 
     @classmethod
     def from_dict(cls, config: dict, path) -> 'Node':
+        # ports come in format list[str]
+        # but should be dict[int, int]
+        if ports := config.get("ports"):
+            ports = {int(port.split(":")[0]): int(port.split(":")[1]) for port in ports}
+        else:
+            ports = {}
         config = NodeData(
             path=path,
-            tag=config.get("tag"),
+            image_tag=config.get("image"),
             depends_on=config.get("depends_on"),
-            ports=config.get("ports"),
+            ports=ports,
             env=config.get("env")
         )
 

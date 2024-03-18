@@ -5,14 +5,15 @@ from dotenv import load_dotenv
 import yaml
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 
 from dxforge import Forge
-from dxforge.routers import cluster
 
 
 class App(FastAPI):
-    def __init__(self, origins=None, *args, **kwargs):
+    def __init__(self, forge: Forge, origins=None, *args, **kwargs):
+        from dxforge.routers import cluster
+
         super().__init__(*args, **kwargs)
 
         if origins is None:
@@ -39,6 +40,7 @@ def main() -> FastAPI:
     load_dotenv()
     config_file = os.getenv("CONFIG_FILE", "config.yaml")
     config = yaml.safe_load(open(config_file, "r"))
+    forge = Forge.from_config(config)
 
     description = """
     The dxforge suite is aimed at small teams and large teams that plan on scaling, 
@@ -48,8 +50,8 @@ def main() -> FastAPI:
     via distributed and scalable nodes, without the need of managing them individually.
     """
 
-    Forge.from_config(config)
     return App(
+        forge=forge,
         title="dxforge",
         description=description,
         summary="An API-based orchestration platform by DivergeX.",
@@ -82,3 +84,9 @@ if __name__ == "__main__":
 else:
     app = main()
     __all__ = ["app"]
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    await Forge().stop()
+    print("Shutting down...")

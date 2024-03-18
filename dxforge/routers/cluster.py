@@ -34,7 +34,14 @@ async def get_controller_info(controller: str):
     return controller.info
 
 
-@router.get("/{controller}/{node}")
+@router.get("/{controller}/status")
+async def get_controller_status(controller: str):
+    controller = get_controller(controller)
+
+    return controller.status()
+
+
+@router.get("/{controller}/node/{node}")
 async def get_node_info(controller: str,
                         node: str):
     controller = get_controller(controller)
@@ -43,7 +50,7 @@ async def get_node_info(controller: str,
     return node.info
 
 
-@router.post("/{controller}/{node}")
+@router.post("/{controller}/node/{node}")
 async def post_node_instruction(request: Request,
                                 controller: str,
                                 node: str):
@@ -69,13 +76,13 @@ async def post_node_instruction(request: Request,
             status = str(node.create_instance())
             response['create'] = status
         if "build" in instructions:
-            status = controller.build(node)
+            status = controller.build_node(node)
             response['build'] = status
         if "start" in instructions:
-            status = controller.start(node)
+            status = controller.start_node(node)
             response['start'] = status
         if "stop" in instructions:
-            status = controller.stop(node)
+            status = controller.stop_node(node)
             response['stop'] = status
         # if response is empty, no valid instructions were provided
         if not response:

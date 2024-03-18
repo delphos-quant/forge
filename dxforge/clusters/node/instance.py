@@ -7,9 +7,9 @@ from .node_data import NodeData
 
 class Instance:
     def __init__(self,
-                 config: NodeData = None,
+                 data: NodeData = None,
                  ):
-        self.config = config
+        self.data = data
         self._container: Container | None = None
         self._image: Image | None = None
 
@@ -21,14 +21,14 @@ class Instance:
 
     def build(self, docker_client: DockerClient) -> Image:
         return docker_client.images.build(
-            path=self.config.path,
-            tag=self.config.tag
+            path=self.data.path,
+            tag=self.data.image_tag
         )
 
-    def start(self, docker_client, tag: str = None) -> Container:
+    def start(self, docker_client: DockerClient) -> Container:
         container = docker_client.containers.run(
-            tag if tag else self.config.tag,
-            ports={port: port for port in self.config.ports.values()},
+            image=self.data.image_tag,
+            ports=self.data.ports,
             detach=True,
         )
         self._container = container
@@ -44,5 +44,5 @@ class Instance:
     def info(self):
         return {
             "host": self._container.attrs["NetworkSettings"]["IPAddress"] if self._container else None,
-            "ports": self.config.ports
+            "ports": self.data.ports
         }
