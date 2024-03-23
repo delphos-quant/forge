@@ -30,6 +30,7 @@ class Instance:
             image=self.data.image_tag,
             ports=self.data.ports,
             detach=True,
+            network_mode='host'
         )
         self._container = container
         return container
@@ -39,6 +40,11 @@ class Instance:
             self._container.stop()
             self._container.remove()
             self._container = None
+
+    def logs(self):
+        if self._container:
+            return self._container.logs()
+        return None
 
     @property
     def info(self):

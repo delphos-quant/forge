@@ -98,3 +98,6 @@ class Node:
         if name is None:
             raise NotImplementedError("No instance union implemented")
         return self._config.ports[name], self.instances[name].info["host"]
+
+    def log(self, uuid):
+        return self.instances[uuid].logs()

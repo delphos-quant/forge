@@ -8,15 +8,20 @@ from dxlib.strategies.custom_strategies import RsiStrategy
 
 
 def main():
-    logger = dx.InfoLogger()
     interface_port = int(os.environ.get("INTERFACE_PORT", 4001))
+    http_port = int(os.environ.get("HTTP_PORT"))
 
     strategy = RsiStrategy(field="price")
-    interface = MarketInterface(host="0.0.0.0")
+    market_interface = MarketInterface(host=f"0.0.0.0")
 
+    logger = dx.InfoLogger()
     executor = dx.Executor(strategy)
+    executor_interface = dx.ExecutorInterface(executor)
+    http_server = dx.HTTPServer(host="0.0.0.0", port=http_port, logger=logger)
+    http_server.add_interface(executor_interface)
     try:
-        quotes: AsyncGenerator = interface.listen(interface.quote_stream, port=interface_port, retry=5)
+        http_server.start()
+        quotes = market_interface.listen(market_interface.quote_stream, port=interface_port, retry=1)
 
         def get_first_element_sync(async_gen):
             async def fetch_first_element():
@@ -49,6 +54,7 @@ def main():
     except KeyboardInterrupt:
         pass
     finally:
+        http_server.stop()
         logger.info("Stopping strategy...")
 
 
