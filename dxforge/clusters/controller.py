@@ -24,7 +24,8 @@ class Controller:
         controller = cls(docker_client)
         for node_name, data in services.items():
             try:
-                if node := Node.from_dict(data, cls.get_node_path(data, controller_path)):
+                path = cls.get_node_path(data, controller_path)
+                if node := Node.from_dict(path, data):
                     controller.nodes[node_name] = node
             except ImageNotFound:
                 continue

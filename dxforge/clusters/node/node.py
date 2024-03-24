@@ -20,27 +20,27 @@ def build(compose_file: str, service_name: str, docker):
 
 
 class Node:
-    def __init__(self, config: NodeData):
+    def __init__(self, config: NodeData, instance_config=None):
         self._config = config
+        self.instance_config = instance_config
         self.instances: Dict[str, Instance] = {}
 
     @classmethod
-    def from_dict(cls, config: dict, path) -> 'Node':
-        # ports come in format list[str]
-        # but should be dict[int, int]
-        if ports := config.get("ports"):
-            ports = {int(port.split(":")[0]): int(port.split(":")[1]) for port in ports}
+    def from_dict(cls, path, config: dict, instance_config=None) -> 'Node':
+        if ports := config.get("expose"):
+            ports = [int(port) for port in ports]
         else:
-            ports = {}
+            ports = []
         config = NodeData(
             path=path,
             image_tag=config.get("image"),
             depends_on=config.get("depends_on"),
             ports=ports,
-            env=config.get("env")
+            env=config.get("env"),
+            network=config.get("network"),
         )
 
-        return cls(config)
+        return cls(config, instance_config)
 
     @property
     def client(self):
@@ -51,17 +51,10 @@ class Node:
         return self._config
 
     @property
-    def alive(self):
-        return any([instance.alive for instance in self.instances.values()])
-
-    @property
     def info(self):
         return {
-            "alive": self.alive,
             "instances": {uuid: instance.alive for uuid, instance in self.instances.items()},
-            "interface": {
-                "ports": self._config.ports
-            }
+            "instance_config": self.instance_config
         }
 
     def create_instance(self, uuid: str = None):

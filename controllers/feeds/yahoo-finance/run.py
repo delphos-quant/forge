@@ -1,12 +1,14 @@
 import os
 import time
+import yaml
 
 import dxlib as dx
 
 
 def main():
-    http_port = int(os.environ.get("HTTP_PORT"))
-    websocket_port = int(os.environ.get("WEBSOCKET_PORT"))
+    config = yaml.safe_load(open("config.yaml", "r"))
+    http_port = int(config["MarketInterface"]["http"]["port"])
+    websocket_port = int(config["MarketInterface"]["ws"]["port"])
 
     logger = dx.InfoLogger()
     interface = dx.MarketInterface(dx.YFinanceAPI())

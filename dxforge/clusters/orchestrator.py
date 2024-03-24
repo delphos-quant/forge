@@ -1,25 +1,15 @@
 import asyncio
 from typing import Dict
 
-import httpx
 import docker
 
 from .controller import Controller
-from .node import Node
 
 
 class Orchestrator:
     def __init__(self, controllers: Dict[str, Controller], docker_client: docker.DockerClient):
         self.controllers = controllers
         self.docker_client = docker_client
-
-    def node_status(self, controller: Controller | str = None, node: Node | str = None):
-        try:
-            if isinstance(controller, str):
-                controller = self.controllers[controller]
-            return controller.nodes[node].alive if isinstance(node, str) else node.alive
-        except (httpx.HTTPError, httpx.InvalidURL):
-            return False
 
     def status(self):
         status = {

@@ -19,6 +19,18 @@ class Instance:
             return False
         return self._container.status == "running"
 
+    @property
+    def ip(self):
+        if self._container:
+            if self.data.network == "host":
+                return "localhost"
+            elif self.data.network == "bridge":
+                return self._container.attrs["NetworkSettings"]["IPAddress"]
+            else:
+                return self._container.attrs["NetworkSettings"]["Networks"][self.data.network]["IPAddress"]
+
+        return None
+
     def build(self, docker_client: DockerClient) -> Image:
         return docker_client.images.build(
             path=self.data.path,
@@ -28,9 +40,9 @@ class Instance:
     def start(self, docker_client: DockerClient) -> Container:
         container = docker_client.containers.run(
             image=self.data.image_tag,
-            ports=self.data.ports,
+            expose=self.data.ports,
+            network=self.data.network,
             detach=True,
-            network_mode='host'
         )
         self._container = container
         return container
@@ -49,6 +61,7 @@ class Instance:
     @property
     def info(self):
         return {
-            "host": self._container.attrs["NetworkSettings"]["IPAddress"] if self._container else None,
-            "ports": self.data.ports
+            "ip": self.ip,
+            "ports": self.data.ports,
+            "network": self.data.network,
         }
